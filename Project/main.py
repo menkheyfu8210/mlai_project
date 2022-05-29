@@ -1,10 +1,13 @@
-from matplotlib.image import imread
-from utils import loader
-from methods import hog
-from methods import dimensionality_reduction as dr
-import numpy as np
-import random
 import os
+import random
+import joblib
+import numpy as np
+import matplotlib.pyplot as plt
+import time
+
+from utils import loader
+from methods.hog import hog
+from methods.svm import svm, getMetrics
 from PIL import Image
 
 def main(args = None):
@@ -12,51 +15,61 @@ def main(args = None):
     # To keep random number generation consistent between runs
     random.seed(0)
 
-    ############################################################################
-    #                                                                          #
-    # DATA LOADING                                                             #
-    #                                                                          #
-    ############################################################################
-    # Load the images
-    #rgbData = loader.loadImgs('../Dataset/sunny_day_sequence/')
-    # Pick 80% of imgs as training data, the rest as test data
-    #trainData = rgbData[:round(len(rgbData) * 0.8)]
-    #testData = rgbData[round(len(rgbData) * 0.8):]
-
-    ############################################################################
-    #                                                                          #
-    # FEATURE EXTRACTION WITH HISTOGRAM OF GRADIENTS                           #
-    # (comment if using existing feature file)                                 #
-    #                                                                          #
-    ############################################################################
-    
-    # Process the training images - apply grayscale and resize for HOG
-    #grayData = ip.grayscale(trainData)
-    #hogData = ip.scale(grayData, 128, 64)
-
+    # These variables set respectively the number of positive and negative training samples
+    N = 5000
+    P = 8000
+    # Load the training images
+    #posData = loader.loadImgs('../Dataset/Pedestrians/', P)
+    #negData = loader.loadImgs('../Dataset/NonPedestrians/', N)
     # Extract the features from the training images using Histogram of Gradients
-    #features = fe.hog(hogData)
-    #np.save(os.path.join('./data', 'features'), features)
+    #posFeatures = []
+    #for p in posData:
+    #    posFeatures.append(hog(p))
+    #posFeatures = np.hstack(posFeatures)
+    #posFeatures = np.reshape(posFeatures, (P, int(posFeatures.shape[0] / P)))
+    #posFeatures = np.nan_to_num(posFeatures)
+    #np.save(os.path.join('./data', 'posFeatures'), posFeatures)
+    #negFeatures = []
+    #for n in negData:
+    #    negFeatures.append(hog(n))
+    #negFeatures = np.hstack(negFeatures)
+    #negFeatures = np.reshape(negFeatures, (N, int(negFeatures.shape[0] / N)))
+    #negFeatures = np.nan_to_num(negFeatures)
+    #np.save(os.path.join('./data', 'negFeatures'), negFeatures)
+
+    # Save time, load the features computed with the above method
+    #posFeatures = np.load('data/posFeatures.npy')
+    #negFeatures = np.load('data/negFeatures.npy')
+
+    # Collect training data
+    #trainData = np.vstack((posFeatures,negFeatures))
+    # Generate corresponding labels, 0 for positive and 1 for negative
+    #P = posFeatures.shape[0]
+    #N = negFeatures.shape[0]
+    #trainLabels = np.hstack((np.zeros((P)), np.ones((N))))
     
-    ############################################################################
-    #                                                                          #
-    # DIMENSIONALITY REDUCTION WITH PRINCIPAL COMPONENT ANALYSIS               #
-    ############################################################################
-    # Load the feature vectors (comment if doing the extraction step)
-    #features = np.load('data/features.npy')
-    # Apply PCA
-    # normalized = dr.pca(features)
+    # Generate an SVM on the training data
+    #model = svm(trainData, trainLabels)
 
-    img = Image.open('../Dataset/Pedestrians/pos00003.pgm').convert('LA')
-    hog.hog(img)
-
-
-
-    #plt.figure()
-    #f, axarr = plt.subplots(1,2) 
-    #axarr[0].imshow(trainData[0])
-    #axarr[1].imshow(grayData[0], cmap='gray')
-    #plt.show()
+    # Save time, load the pre trained model
+    model = joblib.load(os.path.join('./data', 'trained_linear_svm.sav'))
+    
+    #testData = loader.loadImgs('../Dataset/test/')
+    #testLabels = np.hstack((np.zeros((45)), np.ones((74))))
+    # Extract the features from the test images using hog
+    #features = []
+    #for t in testData:
+    #    features.append(hog(t))
+    #features = np.hstack(features)
+    #features = np.reshape(features, (len(testData), int(features.shape[0] / len(testData))))
+    #features = np.nan_to_num(features)
+    # Classify the testing set and build the confusion matrix
+    #[cfs, accuracy, precision_0, precision_1, recall_0, recall_1] = getMetrics(model, features, testLabels)
+    #print('Classifier accuracy: ' + "{0:.2f}".format(accuracy*100) + '%')
+    #print('Precision w.r.t class 0: ' + "{0:.2f}".format(precision_0))
+    #print('Precision w.r.t class 1: ' + "{0:.2f}".format(precision_1))
+    #print('Recall w.r.t class 0: ' + "{0:.2f}".format(recall_0))
+    #print('Recall w.r.t class 1: ' + "{0:.2f}".format(recall_1))
 
 if __name__ == "__main__":
     main()

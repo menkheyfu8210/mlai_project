@@ -1,6 +1,6 @@
-from matplotlib.pyplot import hist
 import numpy as np
 import scipy.signal as sig
+import os
 
 def gradient(img, kernel='default'):
     if kernel == 'sobel':
@@ -64,6 +64,6 @@ def hog(img, rescaleSize=(64,128), patchSize=8, bins=9, gradientKernel='default'
             # Apply normalization
             patch = patch / np.linalg.norm(patch)
             patches.append(patch)
-    features = np.hstack(patches)
+    return np.hstack(patches)
 
     
