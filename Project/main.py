@@ -1,75 +1,92 @@
-import os
-import random
-import joblib
-import numpy as np
-import matplotlib.pyplot as plt
+import cv2
 import time
 
-from utils import loader
-from methods.hog import hog
-from methods.svm import svm, getMetrics
-from PIL import Image
+from methods.classifiers import SVM, KNN, ParzenWindows
+from methods.detector import Detector
+from methods.nms import nms
+from methods.feature_extractor import extractFeatures, loadFeatures
+from skimage.transform import pyramid_gaussian, resize
+from skimage.io import imread
+from skimage.feature import hog
+
+def sliding_window(image, window_size, step_size):
+    '''
+    This function returns a patch of the input image `image` of size equal
+    to `window_size`. The first image returned top-left co-ordinates (0, 0) 
+    and are increment in both x and y directions by the `step_size` supplied.
+    So, the input parameters are -
+    * `image` - Input Image
+    * `window_size` - Size of Sliding Window
+    * `step_size` - Incremented Size of Window
+    The function returns a tuple -
+    (x, y, im_window)
+    where
+    * x is the top-left x co-ordinate
+    * y is the top-left y co-ordinate
+    * im_window is the sliding window image
+    '''
+    for y in range(0, image.shape[0], step_size[1]):
+        for x in range(0, image.shape[1], step_size[0]):
+            yield (x, y, image[y:y + window_size[1], x:x + window_size[0]])
 
 def main(args = None):
 
-    # To keep random number generation consistent between runs
-    random.seed(0)
+    preExtractedFeatures = True
 
-    # These variables set respectively the number of positive and negative training samples
-    N = 5000
-    P = 8000
-    # Load the training images
-    #posData = loader.loadImgs('../Dataset/Pedestrians/', P)
-    #negData = loader.loadImgs('../Dataset/NonPedestrians/', N)
-    # Extract the features from the training images using Histogram of Gradients
-    #posFeatures = []
-    #for p in posData:
-    #    posFeatures.append(hog(p))
-    #posFeatures = np.hstack(posFeatures)
-    #posFeatures = np.reshape(posFeatures, (P, int(posFeatures.shape[0] / P)))
-    #posFeatures = np.nan_to_num(posFeatures)
-    #np.save(os.path.join('./data', 'posFeatures'), posFeatures)
-    #negFeatures = []
-    #for n in negData:
-    #    negFeatures.append(hog(n))
-    #negFeatures = np.hstack(negFeatures)
-    #negFeatures = np.reshape(negFeatures, (N, int(negFeatures.shape[0] / N)))
-    #negFeatures = np.nan_to_num(negFeatures)
-    #np.save(os.path.join('./data', 'negFeatures'), negFeatures)
+    if not preExtractedFeatures:
+        extractFeatures()
+    trainFeatures = []
+    trainLabels = []
+    loadFeatures(trainFeatures, trainLabels)
 
-    # Save time, load the features computed with the above method
-    #posFeatures = np.load('data/posFeatures.npy')
-    #negFeatures = np.load('data/negFeatures.npy')
+    #svm = SVM(True, './models/linearSVM.mod')
+    #knn = KNN(10, 'euclidean', trainFeatures, trainLabels)
+    pw = ParzenWindows(0.2, 'gaussian', trainFeatures)
 
-    # Collect training data
-    #trainData = np.vstack((posFeatures,negFeatures))
-    # Generate corresponding labels, 0 for positive and 1 for negative
-    #P = posFeatures.shape[0]
-    #N = negFeatures.shape[0]
-    #trainLabels = np.hstack((np.zeros((P)), np.ones((N))))
-    
-    # Generate an SVM on the training data
-    #model = svm(trainData, trainLabels)
+    """testFeatures = []
+    testLabels = []
+    loadFeatures(testFeatures, testLabels, True)
+    predicted = svm.model.predict(testFeatures)
+    from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
+    accuracy = accuracy_score(testLabels,predicted)
+    precision_np = precision_score(testLabels,predicted,pos_label=0)
+    precision_p = precision_score(testLabels,predicted,pos_label=1)
+    recall_np = recall_score(testLabels,predicted,pos_label=0)
+    recall_p = recall_score(testLabels,predicted,pos_label=1)
+    print('Classifier accuracy: ' + "{0:.2f}".format(accuracy*100) + '%')
+    print('Precision w.r.t class non-pedestrian: ' + "{0:.2f}".format(precision_np))
+    print('Precision w.r.t class pedestrian: ' + "{0:.2f}".format(precision_p))
+    print('Recall w.r.t class non-pedestrian: ' + "{0:.2f}".format(recall_np))
+    print('Recall w.r.t class pedestrian: ' + "{0:.2f}".format(recall_p))
+    cfs = confusion_matrix(testLabels, predicted)
+    print(cfs)"""
 
-    # Save time, load the pre trained model
-    model = joblib.load(os.path.join('./data', 'trained_linear_svm.sav'))
-    
-    #testData = loader.loadImgs('../Dataset/test/')
-    #testLabels = np.hstack((np.zeros((45)), np.ones((74))))
-    # Extract the features from the test images using hog
-    #features = []
-    #for t in testData:
-    #    features.append(hog(t))
-    #features = np.hstack(features)
-    #features = np.reshape(features, (len(testData), int(features.shape[0] / len(testData))))
-    #features = np.nan_to_num(features)
-    # Classify the testing set and build the confusion matrix
-    #[cfs, accuracy, precision_0, precision_1, recall_0, recall_1] = getMetrics(model, features, testLabels)
-    #print('Classifier accuracy: ' + "{0:.2f}".format(accuracy*100) + '%')
-    #print('Precision w.r.t class 0: ' + "{0:.2f}".format(precision_0))
-    #print('Precision w.r.t class 1: ' + "{0:.2f}".format(precision_1))
-    #print('Recall w.r.t class 0: ' + "{0:.2f}".format(recall_0))
-    #print('Recall w.r.t class 1: ' + "{0:.2f}".format(recall_1))
+    imgs = [imread('./test/test1.png', as_gray=True),
+            imread('./test/test2.png', as_gray=True),
+            imread('./test/test3.png', as_gray=True),
+            imread('./test/test4.png', as_gray=True)]
+            
+    # 480 640
+    for im in imgs:
+        start_time = time.time()
+        im = resize(im, (240, 320))
+
+        detector = Detector(pw,
+                        stepSize = [6,6],
+                        downscale = 1.25,
+                        nmsThreshold = 0.05)
+        detections = detector.process(im)
+
+        # Display the results after performing NMS
+        for (x_tl, y_tl, s, w, h) in detections:
+
+            # Draw the detections
+            cv2.rectangle(im, (x_tl, y_tl), (x_tl + w, y_tl + h), (0,0,0))
+            #cv2.putText(im, "%.2f" % s, (x_tl, y_tl - 10), cv2.FONT_HERSHEY_PLAIN, 1.1, (0,0,0), 2, cv2.LINE_AA)
+
+        print(f"elapsed:{time.time() - start_time}")
+        cv2.imshow("Detected pedestrians", im)
+        cv2.waitKey()
 
 if __name__ == "__main__":
     main()
