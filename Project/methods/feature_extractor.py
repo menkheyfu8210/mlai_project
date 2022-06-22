@@ -45,8 +45,6 @@ def extractFeatures():
     negSamples = glob.glob(os.path.join(negPath, '*'))
     # Cutoff for training/test split
     N = int(len(negSamples) * 0.8)
-    print(N)
-    print(len(negSamples))
     i = 0
     for imgPath in negSamples:
         im = imread(imgPath)

@@ -3,7 +3,8 @@ import numpy as np
 
 from scipy import stats
 from scipy.spatial.distance import cdist
-from sklearn.svm import LinearSVC
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
+from sklearn.svm import SVC
 
 class KNN():
 	def __init__(self, K, metric, trainFeatures, trainLabels) -> None:
@@ -13,9 +14,14 @@ class KNN():
 		'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean', 
 		'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
 		if metric not in metrics:
-			raise ValueError('Invalid distance metric for K means.')
+			raise ValueError('Metric not recognized. Possible options are: ' +
+				'"braycurtis", "canberra", "chebyshev", "cityblock', 
+		'correlation", "cosine", "dice", "euclidean", "hamming", "jaccard', 
+		'jensenshannon", "kulsinski", "kulczynski1", "mahalanobis", "matching', 
+		'minkowski", "rogerstanimoto", "russellrao", "seuclidean', 
+		'sokalmichener", "sokalsneath", "sqeuclidean", "yule"')
 		if K <= 0:
-			raise ValueError('Invalid K value for K means.')
+			raise ValueError('K value must be strictly positive.')
 		self.K = K
 		self.metric = metric
 		self.trainFeatures = trainFeatures
@@ -30,24 +36,25 @@ class KNN():
 
 class ParzenWindows():
 
-	def __init__(self, h, metric, trainFeatures) -> None:
-		metrics = ['rect', 'tri', 'gaussian', 'dexp']
-		if metric not in metrics:
-			raise ValueError('Invalid metric for Parzen Windows.')
+	def __init__(self, h, kernel, trainFeatures) -> None:
+		kernels = ['rect', 'tri', 'gaussian', 'dexp']
+		if kernel not in kernels:
+			raise ValueError('Kernel type not recognized. Possible options are: ' +
+				'"rect", "tri", "gaussian", "dexp".')
 		if h <= 0:
-			raise ValueError('Invalid h value for Parzen Windows.')
+			raise ValueError('h value must be strictly positive.')
 		self.h = h
-		self.metric = metric
+		self.kernel = kernel
 		self.trainFeatures = trainFeatures
 
 	def gamma(self, x):
-		if self.metric == 'rect':
+		if self.kernel == 'rect':
 			return 0.5 if abs(x) <= 1 else 0
-		elif self.metric == 'tri':
+		elif self.kernel == 'tri':
 			return 1-abs(x) if abs(x) <= 1 else 0
-		elif self.metric == 'gaussian':
+		elif self.kernel == 'gaussian':
 			return ((2*np.pi)**(1/2))*np.exp(-0.5*x**2)
-		elif self.metric == 'dexp':
+		elif self.kernel == 'dexp':
 			return 0.5*np.exp(-abs(x))
 		else:
 			raise ValueError('Kernel type not recognized. Possible options are: ' +
@@ -62,13 +69,22 @@ class ParzenWindows():
 		return [0 if l1 > l2 else 1, 1]
 
 class SVM():
-	def __init__(self, pretrained, modelPath) -> None:
-		self.modelPath = modelPath
+	def __init__(self, C=1.0, kernel='linear', maxIter=1000, modelPath='./models/', pretrained=False) -> None:
+		kernels = ['linear', 'poly', 'rbf', 'sigmoid']
+		if C <= 0:
+			raise ValueError('C value must be strictly positive.')
+		if maxIter <= 0:
+			maxIter = -1
+		if kernel not in kernels:
+			raise ValueError('Kernel type not recognized. Possible options are: ' +
+				'"linear", "poly", "rbf", "sigmoid".')
+		
+		self.modelPath = modelPath + kernel + 'C' + str(C).replace('.','') + 'SVM.mod'
 		self.trained = pretrained
 		if self.trained:
 			self.load()
 		else:
-			self.model = LinearSVC()
+			self.model = SVC(C=C, kernel=kernel, max_iter=maxIter)
 
 	def train(self, features, labels):
 		if not self.trained:
@@ -86,3 +102,21 @@ class SVM():
 			self.model = joblib.load(self.modelPath)
 		else: 
 			raise Exception('SVM was not yet trained.')       
+
+	def validate(self, testFeatures, testLabels, _print=False):
+		prediction = self.model.predict(testFeatures)
+		accuracy = accuracy_score(testLabels, prediction)
+		precision_np = precision_score(testLabels, prediction, pos_label=0)
+		precision_p = precision_score(testLabels, prediction, pos_label=1)
+		recall_np = recall_score(testLabels, prediction, pos_label=0)
+		recall_p = recall_score(testLabels, prediction, pos_label=1)
+		cfs = confusion_matrix(testLabels, prediction)
+		if _print:
+			print('Model: ' + self.modelPath)
+			print('Classifier accuracy: ' + "{0:.2f}".format(accuracy * 100) + '%')
+			print('Precision w.r.t class non-pedestrian: ' + "{0:.2f}".format(precision_np))
+			print('Precision w.r.t class pedestrian: ' + "{0:.2f}".format(precision_p))
+			print('Recall w.r.t class non-pedestrian: ' + "{0:.2f}".format(recall_np))
+			print('Recall w.r.t class pedestrian: ' + "{0:.2f}".format(recall_p))
+			print('Confusion matrix:\n')
+			print(cfs)
