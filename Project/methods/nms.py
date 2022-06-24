@@ -42,7 +42,7 @@ def nms(B, threshold=.5):
             if IOU(b, d) > threshold:
                 del B[i]
                 break
-        else:
-            D.append(b)
-            del B[i]
+            else:
+                D.append(b)
+                del B[i]
     return D

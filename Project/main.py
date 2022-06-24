@@ -1,7 +1,8 @@
 import cv2
-import time
-
 import joblib
+import numpy as np
+import pandas as pd
+import time
 
 from methods.classifiers import SVM, KNN, ParzenWindows
 from methods.detector import Detector
@@ -14,54 +15,118 @@ def main(args = None):
     # DEBUG UTILS #
     ###############
     preExtractedFeatures = True
+    useSVMs = False
     preTrainedSVMs = True
+    useKNN = False
+    useParzenWindows = True
 
     ######################
     # FEATURE EXTRACTION #
     ######################
     if not preExtractedFeatures:
         extractFeatures()
-    trainFeatures = []
+    trainFeatures = []  
     trainLabels = []
     # Load features and labels for training
     loadFeatures(trainFeatures, trainLabels)
     testFeatures = []
     testLabels = []
-    # Load features and labels for training
+    # Load features and labels for testing
     loadFeatures(testFeatures, testLabels, True)
-
+    
     #########################
     # CLASSIFICATION W/ SVM #
     #########################
-    if not preTrainedSVMs:
-        # Train a bunch of linear SVMs with varying regularization parameter
-        C = [0.01, 0.1, 1, 10, 100]
+    # Train (or load) a bunch of SVMs with different kernels and varying 
+    # regularization params, then validate each one
+    if useSVMs:
+        C = [0.001, 0.01, 0.1, 1, 10]
+        results = []
         for c in C:
-            svm = SVM(C=c, kernel='linear')
-            svm.train(trainFeatures, trainLabels)
-        # Train a bunch of poly SVMs with varying regularization parameter
+            svm = SVM(C=c, kernel='linear', pretrained=preTrainedSVMs)
+            if not preTrainedSVMs:
+                svm.train(trainFeatures, trainLabels)
+            results.extend(svm.validate(testFeatures, testLabels))
         for c in C:
-            svm = SVM(C=c, kernel='poly')
-            svm.train(trainFeatures, trainLabels)
-        # Train a bunch of sigmoid SVMs with varying regularization parameter
+            svm = SVM(C=c, kernel='poly', pretrained=preTrainedSVMs)
+            if not preTrainedSVMs:
+                svm.train(trainFeatures, trainLabels)
+            results.extend(svm.validate(testFeatures, testLabels))
         for c in C:
-            svm = SVM(C=c, kernel='sigmoid')
-            svm.train(trainFeatures, trainLabels)
-        # Train a bunch of rbf SVMs with varying regularization parameter
+            svm = SVM(C=c, kernel='sigmoid', pretrained=preTrainedSVMs)
+            if not preTrainedSVMs:
+                svm.train(trainFeatures, trainLabels)
+            results.extend(svm.validate(testFeatures, testLabels))
         for c in C:
-            svm = SVM(C=c, kernel='rbf')
-            svm.train(trainFeatures, trainLabels)
-    
-    svm = SVM(C=1, kernel='linear', pretrained=True)
-    svm.validate(testFeatures, testLabels, _print=True)
+            svm = SVM(C=c, kernel='rbf', pretrained=preTrainedSVMs)
+            if not preTrainedSVMs:
+                svm.train(trainFeatures, trainLabels)
+            results.extend(svm.validate(testFeatures, testLabels))
+        results = np.reshape(np.array(results), (20, 7))
+        df = pd.DataFrame(results, columns = ['kernel','C','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p'])
+        joblib.dump(df, './validation_results/svm_testing_results.res')
+        print(df)
+
     #########################
     # CLASSIFICATION W/ KNN #
     #########################
-    # Initialize a bunch of KNN classifiers with varying K values
-    #knn = KNN(10, 'euclidean', trainFeatures, trainLabels)
-    #knn = KNN(10, 'euclidean', trainFeatures, trainLabels)
-    #knn = KNN(10, 'euclidean', trainFeatures, trainLabels)
-    #knn = KNN(10, 'euclidean', trainFeatures, trainLabels)
+    if useKNN:
+        # Initialize a bunch of KNN classifiers with varying K values and distance metrics
+        K0 = int(np.sqrt(len(trainFeatures)))
+        K = [K0 - 150, K0 - 100, K0 - 50, K0, K0 + 50, K0 + 100, K0 + 150]
+        results = []
+        knn = KNN(K0, 'cityblock')
+        knn.train(trainFeatures, testFeatures)
+        for k in K:
+            knn.K = k
+            print(f"cityblock K:{k}")
+            results.extend(knn.validate(trainLabels, testLabels))
+        knn = KNN(K0, 'euclidean')
+        knn.train(trainFeatures, testFeatures)
+        for k in K:
+            knn.K = k
+            print(f"euclidean K:{k}")
+            results.extend(knn.validate(trainLabels, testLabels))
+        knn = KNN(K0, 'minkowski')
+        knn.train(trainFeatures, testFeatures)
+        for k in K:
+            knn.K = k
+            print(f"minkowski K:{k}")
+            results.extend(knn.validate(trainLabels, testLabels))
+        joblib.dump(results, './validation_results/test.res')
+        results = np.reshape(np.array(results), (21, 7))
+        df = pd.DataFrame(results, columns = ['metric','K','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p'])
+        joblib.dump(df, './validation_results/knn_testing_results.res')
+        print(df)
+    
+    ####################################
+    # CLASSIFICATION W/ PARZEN WINDOWS #
+    ####################################
+    if useParzenWindows:
+        # Initialize a bunch of Parzen Windows classifiers with varying h values and kernel types
+        H = [0.1, 0.25, 0.5, 0.75, 1]
+        results = []
+        for h in H:
+            pw = ParzenWindows(h, 'rect', trainFeatures, testFeatures)
+            print(f"rect h:{h}")
+            results.extend(pw.validate(testFeatures, testLabels))
+        for h in H:
+            pw = ParzenWindows(h, 'tri', trainFeatures, testFeatures)
+            print(f"tri h:{h}")
+            results.extend(pw.validate(testFeatures, testLabels))
+        for h in H:
+            pw = ParzenWindows(h, 'gaussian', trainFeatures, testFeatures)
+            print(f"gaussian h:{h}")
+            results.extend(pw.validate(testFeatures, testLabels))
+        for h in H:
+            pw = ParzenWindows(h, 'dexp', trainFeatures, testFeatures)
+            print(f"dexp h:{h}")
+            results.extend(pw.validate(testFeatures, testLabels))
+        joblib.dump(results, './validation_results/test.res')
+        results = np.reshape(np.array(results), (20, 7))
+        df = pd.DataFrame(results, columns = ['kernel','h','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p'])
+        joblib.dump(df, './validation_results/knn_testing_results.res')
+        print(df)
     #pw = ParzenWindows(0.2, 'gaussian', trainFeatures)
 
     """imgs = [imread('./test/test1.png', as_gray=True),

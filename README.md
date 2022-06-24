@@ -12,9 +12,10 @@ The project explores various shallow-learning techniques for pedestrian classifi
 
 The project has the following dependencies:
 
-*[SciPy](https://www.scipy.org/)
-*[scikit-image](https://scikit-image.org/)
-*[scikit-learn](https://scikit-learn.org/stable/)
+* [SciPy](https://www.scipy.org/)
+* [scikit-image](https://scikit-image.org/)
+* [scikit-learn](https://scikit-learn.org/stable/)
+* [pandas](https://pandas.pydata.org/)
 
 The project and dataset require at least 6GB of free disk space.
 
@@ -28,6 +29,8 @@ The dataset used in the project is the Daimler Pedestrian Detection Benchmark Da
 ```
 python ./Project/methods/patch_extract.py
 ```
+
+Note that the last script executed as-is produces around 40 thousand patches. Depending on memory availability this number can be changed by changing the max\_patches parameter in the extract\_patches\_2d function.
 
 ### Classifier benchmarks
 
