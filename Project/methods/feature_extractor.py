@@ -7,6 +7,8 @@ from skimage.io import imread
 from skimage.transform import resize
 
 def extractFeatures():
+    """Extracts the Histogram Of Gradients feature vectors from the dataset.
+    """
     # Paths to the dataset
     posPath = './../Dataset/Pedestrians/'
     negPath = './../Dataset/NonPedestrianPatches/'
@@ -58,6 +60,20 @@ def extractFeatures():
         joblib.dump(f, path)
 
 def loadFeatures(features, labels, test=False):
+    """Loads pre-extracted feature vectors.
+
+    Parameters
+    ----------
+    features : list
+        Empty list to be filled with feature vectors.
+
+    labels : list
+        Empty list to be filled with the class labels associated to the feature 
+        vectors.
+
+    test : bool
+        True to load the testing features, False to load the training features.
+    """
     if not test:
         posFeatPath = './features/train/pos/'
         negFeatPath = './features/train/neg/'

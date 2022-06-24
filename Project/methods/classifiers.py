@@ -138,7 +138,7 @@ class SVM(Classifier):
 				model_path='./models/', 
 				pretrained=False, 
 				debug=True) -> None:
-		# Input argument checks
+		# Input arguments checks
 		kernels = ['linear', 'poly', 'rbf', 'sigmoid']
 		if C <= 0:
 			raise ValueError('C value must be strictly positive.')
@@ -172,11 +172,11 @@ class SVM(Classifier):
         Parameters
         ----------
         train_features : array-like of shape (n_samples, n_features)
-            Training vectors, where `n_samples` is the number of samples
+            Training features, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         train_labels : array-like of shape (n_samples,)
-            Class labels associated to the training vectors.
+            Class labels associated to the training features.
         """
 		if not self.trained:
 			if self.debug: 
@@ -188,7 +188,7 @@ class SVM(Classifier):
 				elapsed = time.time() - start_time
 				print(f"Finished training (time elapsed: {elapsed}s), saving to: {self.model_path}")
 			# Save the model for future use
-			joblib.dump(self.model, self.modelPath)
+			joblib.dump(self.model, self.model_path)
 			self.trained = True
 		else:
 			print('Model was already trained, skipping training.')
@@ -199,13 +199,13 @@ class SVM(Classifier):
         Parameters
         ----------
         test_features : array-like of shape (n_samples, n_features)
-            Testing vectors, where `n_samples` is the number of samples
+            Testing features, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
 		Returns
 		-------
 		array-like of shape (n_samples,) holding the prediction for each testing
-		vector.
+		feature.
         """
 		if self.trained:
 			return self.model.predict(test_features)
@@ -221,13 +221,56 @@ class SVM(Classifier):
 			raise RuntimeError('SVM was not yet trained.')       
 
 	def validate(self, test_features, test_labels, disp=False):
-		# Make a prediction on the test features
-		prediction = self.predict(test_features)
-		super()._validate(self, prediction, test_labels, disp)
+		"""Validate the model's prediction.
 
-# 
-class KNN():
-	def __init__(self, K, metric) -> None:
+        Parameters
+        ----------
+        test_features : array-like of shape (n_samples, n_features)
+            Testing features, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        test_labels : array-like of shape (n_samples,)
+            Class labels associated to the testing features.
+
+		disp : bool
+			Specifies whether or not to print to console the validation metrics.
+
+		Returns
+		-------
+		array-like of shape (n_samples,) holding the prediction for each testing
+		feature.
+        """
+		prediction = self.predict(test_features)
+		return super()._validate(self, prediction, test_labels, disp)
+
+class KNN(Classifier):
+	"""K-Nearest Neighbors based classification. 
+
+    Parameters
+    ----------
+    K : int,
+        Number of neighbors to be considered in classification.
+
+    metric : {'cityblock', 'euclidean', 'minkowski'}, default='euclidean'
+        Specifies the distance metric to be used in the algorithm.
+
+	debug : bool, default=True
+		Specifies whether or not to print debug information to the console
+
+    Attributes
+    ----------
+    K : int
+        Number of neighbors considered in the classification.
+
+    metric : str
+        Distance metric used in the algorithm.
+		
+	debug : bool
+		True if debug information is printed to the console, False otherwise 
+    """
+
+	def __init__(self, K, metric='euclidean', debug=True) -> None:
+		# Input arguments checks
 		metrics = ['cityblock', 'euclidean', 'minkowski']
 		if metric not in metrics:
 			raise ValueError('Metric not recognized. Possible options are: ' +
@@ -236,94 +279,63 @@ class KNN():
 			raise ValueError('K value must be strictly positive.')
 		self.K = K
 		self.metric = metric
+		super().__init__(model_name='KNN', string=self.metric, parameter=self.K)
 
-	def train(self, trainFeatures, testFeatures):
+	def train(self, train_features, test_features):
+		""""Train" the KNN model by constructing the distance matrix from the 
+		given training and testing features. 
+
+        Parameters
+        ----------
+        train_features : array-like of shape (n_samples, n_features)
+            Training features, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        test_features : array-like of shape (n_samples, n_features)
+            Testing features, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+        """
 		if self.metric == 'minkowski':
-			self.D = cdist(trainFeatures, testFeatures, metric=self.metric, p=3.)
+			self.D = cdist(train_features, test_features, metric=self.metric, p=3.)
 		else:
-			self.D = cdist(trainFeatures, testFeatures, metric=self.metric)
+			self.D = cdist(train_features, test_features, metric=self.metric)
 
-	def predict(self, trainLabels):
+	def predict(self, train_labels):
+		"""Make a prediction on testing data.
+
+        Parameters
+        ----------
+        train_labels : array-like of shape (n_samples,)
+            Class labels associated to the training features.
+
+		Returns
+		-------
+		array-like of shape (n_samples,) holding the prediction for each testing
+		feature.
+        """
 		neighbors = np.argsort(self.D, axis=0)
 		kNeighbors = neighbors[:self.K, :]
-		neighborsLabels = np.array(trainLabels)[kNeighbors]
+		neighborsLabels = np.array(train_labels)[kNeighbors]
 		return stats.mode(neighborsLabels, axis=0)[0].flatten()
 
-	def validate(self, trainLabels, testLabels, _print=False):
-		prediction = self.predict(trainLabels)
-		accuracy = round(accuracy_score(testLabels, prediction) * 100, 3)
-		precision_np = round(precision_score(testLabels, prediction, pos_label=0), 3)
-		precision_p = round(precision_score(testLabels, prediction, pos_label=1), 3)
-		recall_np = round(recall_score(testLabels, prediction, pos_label=0), 3)
-		recall_p = round(recall_score(testLabels, prediction, pos_label=1), 3)
-		cfs = confusion_matrix(testLabels, prediction)
-		ret = np.array([self.metric, self.K, accuracy, precision_np, precision_p, recall_np, recall_p]).T
-		if _print:
-			print('Model: ' + self.modelPath)
-			print(f"Classifier accuracy: {(accuracy)}%")
-			print(f"Precision w.r.t class non-pedestrian: {precision_np}")
-			print(f"Precision w.r.t class pedestrian: {precision_p}")
-			print(f"Recall w.r.t class non-pedestrian: {recall_np}")
-			print(f"Recall w.r.t class pedestrian: {recall_p}")
-			print('Confusion matrix:\n')
-			print(cfs)
-		return ret
-class ParzenWindows():
+	def validate(self, train_labels, test_labels, disp=False):
+		"""Validate the model's prediction.
 
-	def __init__(self, h, kernel, trainFeatures, trainLabels) -> None:
-		kernels = ['rect', 'tri', 'gaussian', 'dexp']
-		if kernel not in kernels:
-			raise ValueError('Kernel type not recognized. Possible options are: ' +
-				'"rect", "tri", "gaussian", "dexp".')
-		if h <= 0:
-			raise ValueError('h value must be strictly positive.')
-		self.h = h
-		self.kernel = kernel
-		self.trainClass0 = trainFeatures[trainLabels == 0]
-		self.trainClass1 = trainFeatures[trainLabels == 1]
+        Parameters
+        ----------
+        train_labels : array-like of shape (n_samples,)
+            Class labels associated to the training features.
 
-	def gamma(self, x):
-		if self.kernel == 'rect':
-			return 0.5 if abs(x) <= 1 else 0
-		elif self.kernel == 'tri':
-			return 1-abs(x) if abs(x) <= 1 else 0
-		elif self.kernel == 'gaussian':
-			return ((2*np.pi)**(1/2))*np.exp(-0.5*x**2)
-		elif self.kernel == 'dexp':
-			return 0.5*np.exp(-abs(x))
-		else:
-			raise ValueError('Kernel type not recognized. Possible options are: ' +
-				'"rect", "tri", "gaussian", "dexp".')
+        test_labels : array-like of shape (n_samples,)
+            Class labels associated to the testing features.
 
-	def predict(self, testFeatures):
-		predicted = []
-		for x_te in testFeatures[:,0]:
-			g1, g2 = [], []
-			for x0 in self.trainClass0[:,0]:
-				g1 = np.append(g1, self.gamma((x_te - x0)/self.h, self.kernel))
-			for x1 in self.trainClass1[:,0]:
-				g2 = np.append(g2, self.gamma((x_te - x1)/self.h, self.kernel))
-			l0 = np.mean(g1)/self.h # Likelihood of class 0
-			l1 = np.mean(g2)/self.h # Likelihood of class 1
-			predicted = np.append(predicted, 0 if l0 > l1 else 1)
-		return predicted
+		disp : bool
+			Specifies whether or not to print to console the validation metrics.
 
-	def validate(self, testFeatures, testLabels, _print=False):
-		prediction = self.predict(testFeatures)
-		accuracy = round(accuracy_score(testLabels, prediction) * 100, 3)
-		precision_np = round(precision_score(testLabels, prediction, pos_label=0), 3)
-		precision_p = round(precision_score(testLabels, prediction, pos_label=1), 3)
-		recall_np = round(recall_score(testLabels, prediction, pos_label=0), 3)
-		recall_p = round(recall_score(testLabels, prediction, pos_label=1), 3)
-		cfs = confusion_matrix(testLabels, prediction)
-		ret = np.array([self.kernel, self.C, accuracy, precision_np, precision_p, recall_np, recall_p]).T
-		if _print:
-			print('Model: ' + self.modelPath)
-			print(f"Classifier accuracy: {(accuracy)}%")
-			print(f"Precision w.r.t class non-pedestrian: {precision_np}")
-			print(f"Precision w.r.t class pedestrian: {precision_p}")
-			print(f"Recall w.r.t class non-pedestrian: {recall_np}")
-			print(f"Recall w.r.t class pedestrian: {recall_p}")
-			print('Confusion matrix:\n')
-			print(cfs)
-		return ret
+		Returns
+		-------
+		array-like of shape (n_samples,) holding the prediction for each testing
+		feature.
+        """
+		prediction = self.predict(train_labels)
+		return super()._validate(self, prediction, test_labels, disp)

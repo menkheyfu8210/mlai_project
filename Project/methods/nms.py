@@ -1,4 +1,30 @@
 def IOU(p1, p2):
+    """Computation of the Intersection Over Union of two bounding boxes.
+
+    Parameters
+    ----------
+    p1 : list
+        List with length 5 holding:
+
+            - float, x coordinate of the top left corner of the bounding box
+            - float, y coordinate of the top left corner of the bounding box
+            - float, confidence score associated to the bounding box
+            - int, width of the bounding box
+            - int, heigth of the bounding box
+
+    p2 : list
+        List with length 5 holding:
+
+            - float, x coordinate of the top left corner of the bounding box
+            - float, y coordinate of the top left corner of the bounding box
+            - float, confidence score associated to the bounding box
+            - int, width of the bounding box
+            - int, heigth of the bounding box
+
+    Returns
+    -------
+    float, expressing the IOU of the two bounding boxes.
+    """
     # x-y coordinates of the detected rectangles
     x1_tl = p1[0]
     x2_tl = p2[0]
@@ -17,21 +43,40 @@ def IOU(p1, p2):
     totalArea = area1 + area2 - overlapArea
     return overlapArea / float(totalArea)
 
-#   Non-maximum suppression
-#
-# 1. Select from B the proposal with the highest confidence score, remove it 
-#    from B, and add it to an initially empty list D.
-# 2. Compare the proposal with all other proposals in B by computing the ratio
-#    between the overlapping area and the total area (IOU).
-# 3. Remove from B all the proposals with an IOU greater than some threshold.
-# 4. Repeat until B is empty.
-
 def nms(B, threshold=.5):
+    """Non-Maximum Suppression. Given a list B of proposed bounding boxes:
+
+        1.Select from B the proposal with the highest confidence score, remove it
+            from B, and add it to an initially empty list D.
+        2.Compare the proposal with all other proposals in B by computing the ratio
+            between the overlapping area and the total area (IOU).
+        3.Remove from B all the proposals with an IOU greater than some threshold.\\
+        4.Repeat until B is empty.
+
+    Parameters
+    ----------
+    B : list
+        List of proposed bounding boxes. Each element in the list is a list
+        containing:
+
+            - float, x coordinate of the top left corner of the bounding box
+            - float, y coordinate of the top left corner of the bounding box
+            - float, confidence score associated to the bounding box
+            - int, width of the bounding box
+            - int, heigth of the bounding box
+
+
+    threshold : float
+        IOU Threshold for the discarding of overlapping bounding boxes.
+
+    Returns
+    -------
+    list, containing the filtered bounding boxes.
+    """
     if len(B) == 0:
         return []
     # Sort the proposals based on confidence score
     B = sorted(B, key=lambda B: B[2], reverse=True)
-
     D=[]
     D.append(B[0])
     del B[0]

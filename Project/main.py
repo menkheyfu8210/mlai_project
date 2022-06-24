@@ -99,36 +99,6 @@ def main(args = None):
         joblib.dump(df, './validation_results/knn_testing_results.res')
         print(df)
     
-    ####################################
-    # CLASSIFICATION W/ PARZEN WINDOWS #
-    ####################################
-    if useParzenWindows:
-        # Initialize a bunch of Parzen Windows classifiers with varying h values and kernel types
-        H = [0.1, 0.25, 0.5, 0.75, 1]
-        results = []
-        for h in H:
-            pw = ParzenWindows(h, 'rect', trainFeatures, testFeatures)
-            print(f"rect h:{h}")
-            results.extend(pw.validate(testFeatures, testLabels))
-        for h in H:
-            pw = ParzenWindows(h, 'tri', trainFeatures, testFeatures)
-            print(f"tri h:{h}")
-            results.extend(pw.validate(testFeatures, testLabels))
-        for h in H:
-            pw = ParzenWindows(h, 'gaussian', trainFeatures, testFeatures)
-            print(f"gaussian h:{h}")
-            results.extend(pw.validate(testFeatures, testLabels))
-        for h in H:
-            pw = ParzenWindows(h, 'dexp', trainFeatures, testFeatures)
-            print(f"dexp h:{h}")
-            results.extend(pw.validate(testFeatures, testLabels))
-        joblib.dump(results, './validation_results/test.res')
-        results = np.reshape(np.array(results), (20, 7))
-        df = pd.DataFrame(results, columns = ['kernel','h','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p'])
-        joblib.dump(df, './validation_results/knn_testing_results.res')
-        print(df)
-    #pw = ParzenWindows(0.2, 'gaussian', trainFeatures)
-
     """imgs = [imread('./test/test1.png', as_gray=True),
             imread('./test/test2.png', as_gray=True),
             imread('./test/test3.png', as_gray=True),

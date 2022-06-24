@@ -14,6 +14,21 @@ class Detector():
         self.nmsth = nmsThreshold
 
     def process(self, img):
+        """Pyramid-HOG detection. A Gaussian Pyramid is generated from the 
+        image. A sliding window is passed over each image in the pyramid, 
+        extracting a HOG feature vector. The feature vector is classified with
+        an SVM. Non-Maximum Suppression is applied to the resulting list of
+        bounding boxes.
+
+        Parameters
+        ----------
+        img : float matrix
+            The image to be processed.
+
+        Returns
+        -------
+        list, containing the filtered bounding boxes.
+        """
         proposals = []
         # The current scale of the image
         scale = 0
@@ -40,8 +55,24 @@ class Detector():
         # Perform Non Maximum Suppression
         return nms(proposals, self.nmsth)
 
-    # Generator function of sliding windows over the image 
     def sliding_window(self, image, window_size, step_size):
+        """Generator function that yields a sliding window over an image.
+
+        Parameters
+        ----------
+        img : float matrix
+            The image to be processed.
+
+        window_size : list of length 2
+            Holds, in order, the width and height of the sliding window.
+
+        window_size : list of length 2
+            Holds, in order, the width and height of the sliding window.
+    
+        Yields
+        ------
+        float matrix, representing the next window read from the image.
+        """
         for y in range(0, image.shape[0], step_size[1]):
             for x in range(0, image.shape[1], step_size[0]):
                 yield (x, y, image[y:y + window_size[1], x:x + window_size[0]])   
