@@ -4,16 +4,16 @@ import numpy as np
 import pandas as pd
 import time
 
-from methods.classifiers import SVM, KNN, ParzenWindows
+from methods.classifiers import SVM, KNN
 from methods.detector import Detector
 from methods.feature_extractor import extractFeatures, loadFeatures
 from skimage.io import imread
 
 def main(args = None):
 
-    ###############
-    # DEBUG UTILS #
-    ###############
+    ############
+    # SETTINGS #
+    ############
     preExtractedFeatures = True
     useSVMs = False
     preTrainedSVMs = True

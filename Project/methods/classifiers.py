@@ -1,11 +1,12 @@
 import joblib
 import numpy as np
+import os
 import time
 
 from math import nan
-from scipy import stats
-from scipy.spatial.distance import cdist
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier, KernelDensity
 from sklearn.svm import SVC
 
 class Classifier():
@@ -13,6 +14,9 @@ class Classifier():
 
     Parameters
     ----------
+    model_path : str, default='./models/'
+        Path where the model is stored.
+
     model_name : str, default='unnamed'
         Specifies the model's name for debug purposes.
 
@@ -25,24 +29,94 @@ class Classifier():
 
     Attributes
     ----------
+    model_path : str
+        Model save location.
+
     model_name : str
         Specifies the model's name.
 
     string : str
-        Model-specific string (e.g. kernel type for SVM, distance metric for KNN
-		, etc.)
+        Model-specific string (e.g. kernel type for SVM, distance metric for \
+		KNN, etc.).
 
     parameter : float
-        Model-specific parameter (e.g. C for SVM, K for KNN, etc.)
+        Model-specific parameter (e.g. C for SVM, K for KNN, etc.).
+
+	loaded : bool
+		True if the model has been loaded, False otherwise.
     """
 
-	def __init__(self, model_name='unnamed', string='', parameter=nan) -> None:
+	def __init__(self, 
+				model_path='./models/', 
+				model_name='unnamed', 
+				string='', 
+				parameter=nan) -> None:
 		self.model_name = model_name
+		self.model_path = model_path
+		if not os.path.exists(model_path):
+			os.makedirs(model_path)
 		self.string = string
 		self.parameter = parameter
+		self.loaded = False
 
-	def _validate(self, prediction, test_labels, disp=False):
-		"""Validate the prediction of a model against the known testing data's
+	def load(self):
+		"""Load a pretrained model.
+        """
+		if os.path.exists(self.model_path + self.model_name):
+			self.model = joblib.load(self.model_path + self.model_name)
+			self.loaded = True
+		else: 
+			raise FileNotFoundError(self.model_path + self.model_name + ': file not found.')  
+
+	def train(self, train_features, train_labels):
+		"""Train the model on the given training data.
+
+        Parameters
+        ----------
+        train_features : array-like of shape (n_samples, n_features)
+            Training features, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        train_labels : array-like of shape (n_samples,)
+            Class labels associated to the training features.
+        """
+		if os.path.exists(self.model_path + self.model_name):
+			print("Training " + self.model_name + self.model_name)
+			start_time = time.time()
+			# Train the model on the provided data
+			self.model.fit(train_features, train_labels)
+			elapsed = time.time() - start_time
+			print(f"Finished training (time elapsed: {elapsed}s), saving to: {self.model_path + self.model_name}")
+			# Save the model for future use
+			joblib.dump(self.model, self.model_path + self.model_name)
+		else:
+			print('Model was already trained, skipping training.')
+
+	def predict(self, test_features):
+		"""Make a prediction on testing data.
+
+        Parameters
+        ----------
+        test_features : array-like of shape (n_samples, n_features)
+            Testing features, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+		Returns
+		-------
+		array-like of shape (n_samples,) holding the prediction for each testing
+		feature.
+        """
+		if os.path.exists(self.model_path + self.model_name):
+			start_time = time.time()
+			prediction = self.model.predict(test_features)
+			elapsed = time.time() - start_time
+			print(f"Finished predicting (time elapsed: {elapsed}s).")
+			return prediction
+		else: 
+			raise RuntimeError('Model not trained.')  
+
+	def validate(self, prediction, test_labels, disp=False):
+		"""Validate the prediction of the model against the known testing data's
 		class labels.
 		
         Parameters
@@ -57,7 +131,7 @@ class Classifier():
 		-------
 		numpy array of shape (1, 7) holding:
 
-		- str, Model-specific (e.g. kernel type for SVM, distance metric for KNN
+		- str, Model-specific (e.g. kernel type for SVM, distance metric for KNN)
 		- float, Model-specific (e.g. C for SVM, K for KNN, etc.)
 		- float, accuracy
 		- float, precision w.r.t. class 0
@@ -65,6 +139,8 @@ class Classifier():
 		- float, recall w.r.t. class 0
 		- float, recall w.r.t. class 1
         """
+		if not self.loaded:
+			self.load()
 		accuracy = round(accuracy_score(test_labels, prediction) * 100, 3)
 		precision_np = round(precision_score(test_labels, prediction, pos_label=0), 3)
 		precision_p = round(precision_score(test_labels, prediction, pos_label=1), 3)
@@ -84,9 +160,8 @@ class Classifier():
 		return ret
 	
 class SVM(Classifier):
-	"""Support Vector Machine based classification.
-
-    The implementation is based on sklearn's SVC. 
+	"""Support Vector Machine based classification. This is a wrapper class around
+	sklearn's SVC class.
 
     Parameters
     ----------
@@ -98,153 +173,48 @@ class SVM(Classifier):
     kernel : {'linear', 'poly', 'rbf', 'sigmoid'}, default='rbf'
         Specifies the kernel type to be used in the algorithm.
 
-    model_path : str, default='./models/'
+    max_iter : int, default=1000
+        Hard limit on iterations within solver. -1 for no limit.
+
+    model_path : str, default='./models/svm/'
         Specifies where to save and look for trained models.
 
 	pretrained : bool, default=True
 		Specifies whether or not the SVM was already trained.
 
-	debug : bool, default=True
-		Specifies whether or not to print debug information to the console
-
     Attributes
-    ----------
-    C : float
-        Regularization parameter. 
-
-    kernel : str
-        Kernel type used in the algorithm.
-
-    max_iter : int
-        Hard limit on iterations within solver.
-		
-    model_name : str
-        Name of the model, obtained as: kernel + C + 'SVM.mod'
-
-    model_path : str
-        Full path of where the trained model is saved.
-
-	trained : bool
-		True if the SVM was already trained, False otherwise
-		
-	debug : bool
-		True if debug information is printed to the console, False otherwise 
+    ----------		
+	model : object
+		Instance of sklearn.svm.SVC
     """
 
 	def __init__(self, 
 			 	C=1.0, 
 				kernel='rbf', 
 				max_iter=1000,
-				model_path='./models/', 
-				pretrained=False, 
-				debug=True) -> None:
+				model_path='./models/svm/', 
+				pretrained=False) -> None:
 		# Input arguments checks
 		kernels = ['linear', 'poly', 'rbf', 'sigmoid']
-		if C <= 0:
+		if C <= 0: 
 			raise ValueError('C value must be strictly positive.')
-		if max_iter <= 0: 
-			raise ValueError('Maximum iteration number must be strictly positive.')
+		if max_iter <= 0:  
+			max_iter = -1
 		if kernel not in kernels:
 			raise ValueError('Kernel type not recognized. Possible options are: ' +
 				'"linear", "poly", "rbf", "sigmoid".')
-		self.debug = debug
-		# Keep the SVM parameters saved
-		self.C = C
-		self.kernel = kernel
-		self.max_iter = max_iter
-		# Path to save/load the model to/from
-		self.model_name = kernel + 'C' + str(C).replace('.','') + 'SVM.mod'
-		self.model_path = model_path + self.model_name
-		self.trained = pretrained
-		if self.trained:
-			# Load the SVM
-			if self.debug: print("Loading " + self.model_path)
-			self.load()
+		model_name = kernel + 'C' + str(C).replace('.','') + 'SVM.mod'
+		super().__init__(model_path, model_name, kernel, C)
+		if pretrained: 
+			super().load()
 		else:
-			# Initialize the SVM
-			if self.debug: print("Initializing " + kernel + f" SVM w/ C={self.C}")
-			self.model = SVC(C=self.C, kernel=self.kernel, max_iter=self.max_iter)
-		super().__init__(self.model_name, self.kernel, self.C)
-
-	def train(self, train_features, train_labels):
-		"""Train the SVM model on the given training data.
-
-        Parameters
-        ----------
-        train_features : array-like of shape (n_samples, n_features)
-            Training features, where `n_samples` is the number of samples
-            and `n_features` is the number of features.
-
-        train_labels : array-like of shape (n_samples,)
-            Class labels associated to the training features.
-        """
-		if not self.trained:
-			if self.debug: 
-				print("Training " + self.model_name)
-				start_time = time.time()
-			# Train the SVM on the provided data
-			self.model.fit(train_features, train_labels)
-			if self.debug: 
-				elapsed = time.time() - start_time
-				print(f"Finished training (time elapsed: {elapsed}s), saving to: {self.model_path}")
-			# Save the model for future use
-			joblib.dump(self.model, self.model_path)
-			self.trained = True
-		else:
-			print('Model was already trained, skipping training.')
-
-	def predict(self, test_features):
-		"""Make a prediction on testing data.
-
-        Parameters
-        ----------
-        test_features : array-like of shape (n_samples, n_features)
-            Testing features, where `n_samples` is the number of samples
-            and `n_features` is the number of features.
-
-		Returns
-		-------
-		array-like of shape (n_samples,) holding the prediction for each testing
-		feature.
-        """
-		if self.trained:
-			return self.model.predict(test_features)
-		else:
-			raise RuntimeError('SVM was not yet trained.')
-
-	def load(self):
-		"""Load a pretrained model.
-        """
-		if self.trained:
-			self.model = joblib.load(self.model_path)
-		else: 
-			raise RuntimeError('SVM was not yet trained.')       
-
-	def validate(self, test_features, test_labels, disp=False):
-		"""Validate the model's prediction.
-
-        Parameters
-        ----------
-        test_features : array-like of shape (n_samples, n_features)
-            Testing features, where `n_samples` is the number of samples
-            and `n_features` is the number of features.
-
-        test_labels : array-like of shape (n_samples,)
-            Class labels associated to the testing features.
-
-		disp : bool
-			Specifies whether or not to print to console the validation metrics.
-
-		Returns
-		-------
-		array-like of shape (n_samples,) holding the prediction for each testing
-		feature.
-        """
-		prediction = self.predict(test_features)
-		return super()._validate(self, prediction, test_labels, disp)
+			# Initialize the model
+			print("Initializing " + kernel + f" SVM w/ C={C}")
+			self.model = SVC(C=C, kernel=kernel, max_iter=max_iter)
 
 class KNN(Classifier):
-	"""K-Nearest Neighbors based classification. 
+	"""K-Nearest Neighbors based classification. This is a wrapper class around
+	sklearn's KNeighborsClassifier class.
 
     Parameters
     ----------
@@ -254,22 +224,23 @@ class KNN(Classifier):
     metric : {'cityblock', 'euclidean', 'minkowski'}, default='euclidean'
         Specifies the distance metric to be used in the algorithm.
 
-	debug : bool, default=True
-		Specifies whether or not to print debug information to the console
+    model_path : str, default='./models/knn/'
+        Specifies where to save and look for trained models.
+
+	pretrained : bool, default=True
+		Specifies whether or not the model was already trained.
 
     Attributes
-    ----------
-    K : int
-        Number of neighbors considered in the classification.
-
-    metric : str
-        Distance metric used in the algorithm.
-		
-	debug : bool
-		True if debug information is printed to the console, False otherwise 
+    ----------		
+	model : object
+		Instance of sklearn.neighbors.KNeighborsClassifier
     """
 
-	def __init__(self, K, metric='euclidean', debug=True) -> None:
+	def __init__(self, 
+				K, 
+				metric='euclidean', 
+				model_path='./models/', 
+				pretrained=False) -> None:
 		# Input arguments checks
 		metrics = ['cityblock', 'euclidean', 'minkowski']
 		if metric not in metrics:
@@ -277,65 +248,55 @@ class KNN(Classifier):
 				'"cityblock, "euclidean", "minkowski"')
 		if K <= 0:
 			raise ValueError('K value must be strictly positive.')
-		self.K = K
-		self.metric = metric
-		super().__init__(model_name='KNN', string=self.metric, parameter=self.K)
-
-	def train(self, train_features, test_features):
-		""""Train" the KNN model by constructing the distance matrix from the 
-		given training and testing features. 
-
-        Parameters
-        ----------
-        train_features : array-like of shape (n_samples, n_features)
-            Training features, where `n_samples` is the number of samples
-            and `n_features` is the number of features.
-
-        test_features : array-like of shape (n_samples, n_features)
-            Testing features, where `n_samples` is the number of samples
-            and `n_features` is the number of features.
-        """
-		if self.metric == 'minkowski':
-			self.D = cdist(train_features, test_features, metric=self.metric, p=3.)
+		p_dict = {
+			'cityblock' : 1, 
+			'euclidean' : 2, 
+			'minkowski' : 3
+		}
+		model_name = metric + 'K' + str(K) + 'KNN.mod'
+		super().__init__(model_path, model_name, metric, K)
+		if pretrained: 
+			super().load()
 		else:
-			self.D = cdist(train_features, test_features, metric=self.metric)
+			# Initialize the model
+			print("Initializing " + metric + f" KNN w/ K={K}")
+			self.model = KNeighborsClassifier(n_neighbors=K, 
+											p=p_dict[metric], 
+											metric=metric)
 
-	def predict(self, train_labels):
-		"""Make a prediction on testing data.
+class NaiveBayes(Classifier):
+	"""Naive Bayes based classification. This is a wrapper class around
+	sklearn's GaussianNB class.
 
-        Parameters
-        ----------
-        train_labels : array-like of shape (n_samples,)
-            Class labels associated to the training features.
+    Parameters
+    ----------
+    alpha : float, default = 1.0
+        Smoothing parameter. 0.0 for no smoothing.
 
-		Returns
-		-------
-		array-like of shape (n_samples,) holding the prediction for each testing
-		feature.
-        """
-		neighbors = np.argsort(self.D, axis=0)
-		kNeighbors = neighbors[:self.K, :]
-		neighborsLabels = np.array(train_labels)[kNeighbors]
-		return stats.mode(neighborsLabels, axis=0)[0].flatten()
+    model_path : str, default='./models/naive_bayes/'
+        Specifies where to save and look for trained models.
 
-	def validate(self, train_labels, test_labels, disp=False):
-		"""Validate the model's prediction.
+	pretrained : bool, default=True
+		Specifies whether or not the SVM was already trained.
 
-        Parameters
-        ----------
-        train_labels : array-like of shape (n_samples,)
-            Class labels associated to the training features.
+    Attributes
+    ----------
+	model : object
+		Instance of sklearn.naive_bayes.GaussianNB
+    """
 
-        test_labels : array-like of shape (n_samples,)
-            Class labels associated to the testing features.
-
-		disp : bool
-			Specifies whether or not to print to console the validation metrics.
-
-		Returns
-		-------
-		array-like of shape (n_samples,) holding the prediction for each testing
-		feature.
-        """
-		prediction = self.predict(train_labels)
-		return super()._validate(self, prediction, test_labels, disp)
+	def __init__(self, 
+				alpha=1.0, 
+				model_path='./models/naive_bayes/', 
+				pretrained=False) -> None:
+		# Input arguments checks
+		if alpha <= 0:
+			raise ValueError('alpha value must be strictly positive.')
+		model_name = 'alpha' + str(alpha) + 'NaiveBayes.mod'
+		if pretrained: 
+			super().load()
+		else:
+			# Initialize the model
+			print(f"Initializing NaiveBayes w/ alpha={alpha}")
+			self.model = GaussianNB(alpha=alpha)
+		super().__init__(model_path, model_name, '', alpha)
