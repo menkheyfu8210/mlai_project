@@ -3,14 +3,13 @@ import numpy as np
 import pandas as pd
 
 from methods.classifiers import SVM, KNN, NaiveBayes
-from methods.feature_extractor import extractFeatures, loadFeatures
+from methods.feature_extractor import FeatureExtractor
 
 def main(args = None):
 
     ############
     # SETTINGS #
     ############
-    preExtractedFeatures = True
     useSVMs = False
     preTrainedSVMs = False
     useKNN = False
@@ -18,19 +17,12 @@ def main(args = None):
     useNB = False
     preTrainedNB = False
 
-    ######################
-    # FEATURE EXTRACTION #
-    ######################
-    if not preExtractedFeatures:
-        extractFeatures()
-    trainFeatures = []  
-    trainLabels = []
-    # Load features and labels for training
-    loadFeatures(trainFeatures, trainLabels)
-    testFeatures = []
-    testLabels = []
-    # Load features and labels for testing
-    loadFeatures(testFeatures, testLabels, test=True)
+    ##################################
+    # FEATURE EXTRACTION AND LOADING #
+    ##################################
+    fe = FeatureExtractor()
+    (trainFeatures, trainLabels) = fe.extract_training_features()
+    (testFeatures, testLabels) = fe.extract_testing_features()
     
     #########################
     # CLASSIFICATION W/ SVM #

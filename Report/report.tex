@@ -1,6 +1,6 @@
 \documentclass[journal,twocolumn]{IEEEtran}
 \usepackage{graphicx}
-\graphicspath{{../pdf/}{../jpeg/}}
+\graphicspath{{figures/}}
 \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
 \usepackage{amsmath}
 \usepackage{float}
@@ -84,7 +84,19 @@ Finally, the best performing classifier will be used to implement a detector, th
 \section{Dataset}
 \label{sec:data}
 
-The data set used in this work is the Daimler Mono Pedestrian Classification Benchmark Data Set. The data set consists of four separate subsets: the base set and three additional sets. The base set is divided into five subsets, three for training (named "1", "2" and "3") and two for testing (named "T1" and "T2"). All five sets contain 4800 18$\times$36 images containing pedestrians and 5000 18$\times$36 images not containing pedestrians. The three additional sets each contain 1200 640$\times$280 images for the purpose of extracting additional negative samples for the hard-negative mining procedure.
+The data set used in this work is the Daimler Mono Pedestrian Classification Benchmark Data Set. The data set consists of four separate subsets: the base set and three additional sets. The base set is divided into five subsets, three for training (named "1", "2" and "3") and two for testing (named "T1" and "T2"). All five sets contain 4800 18$\times$36 grayscale images containing pedestrians and 5000 18$\times$36 grayscale images not containing pedestrians. The three additional sets each contain 1200 640$\times$280 grayscale images for the purpose of extracting additional negative samples for the hard-negative mining procedure.
+
+\begin{figure}[h]
+\begin{minipage}{0.45\columnwidth}
+\centering
+\includegraphics[keepaspectratio,width=0.4\textwidth]{1}
+\end{minipage}
+\begin{minipage}{0.45\columnwidth}
+\centering
+\includegraphics[keepaspectratio,width=0.4\textwidth]{2}
+\end{minipage}
+\caption{Example figures from the training data set. On the left a non-pedestrian sample, on the right a pedestrian sample.}
+\end{figure}
 
 In this work, data sets 1, 2 and 3 will be grouped together in a singular data set for the training of the models, as will data sets T1 and T2 for the testing.
 
@@ -118,6 +130,45 @@ After the convolution operation, two gradient matrices are obtained, $G_x$ and $
 \begin{equation*}
 \theta(i,j)=\abs{\tan^{-1}\left(\frac{G_y(i,j)}{G_x(i,j)}\right)}
 \end{equation*}
+
+In practice the angle is computed with $atan2$, therefore it is in the range $(\pi,\pi]$.
+
+The resulting gradient magnitude and gradient angle matri-
+ces are then divided into $8\times 8$ patches, for each of which a 9-point histogram of oriented gradients is computed. A
+histogram is a series of bins labeled with angle values. The
+number of bins is determined by the angle step between
+the bins, for instance with an angle step of 20 degrees the
+histogram will have $180^\circ/20^\circ = 9$ bins.
+
+For each pixel in the patch, the corresponding gradient angle
+determines two bins on the histogram that the pixel votes for.
+The two bins selected are those which represent the two closest
+angles to the given gradient angle value. The value added to
+the selected bins is proportional to the distance of the gradient
+angle to the bin angle, the gradient magnitude and the step
+between the bins:
+\begin{equation*}
+v_{closest}=\frac{(binAngle-\theta)\mu}{angleStep}
+\end{equation*}
+\begin{equation*}
+v_{2nd-closest}=\frac{(\theta-binAngle)\mu}{angleStep}
+\end{equation*}
+
+Repeating the process for each 8 × 8 patch, a 16$\times$8 matrix
+of histograms is constructed.
+To reduce the variability in gradient intensities due to lighting conditions and foreground-background contrast, a block
+normalization procedure is introduced. The 16$\times$8 histogram
+matrix is scanned with a 2$\times$2 window producing 15$\times$7 blocks,
+for each of which a normalized histogram vector is computed
+by concatenating the four histograms contained in the block
+and normalizing the resulting vector.
+Finally, the feature descriptor for the image is constructed
+by concatenating the normalized histogram vectors. From
+each 8$\times$8 patch a 1$\times$9 vector is collected, which is then
+concatenated with another three 1$\times$9 vectors composing a
+1$\times$36 vector, which is finally concatenated with another
+fourteen 1$\times$36 vectors, resulting in a 1$\times$3780 feature vector.
+
 
 \subsection{Naive Bayes}
 
