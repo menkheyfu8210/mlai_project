@@ -24,6 +24,47 @@ def main(args = None):
     (trainFeatures, trainLabels) = fe.extract_training_features()
     (testFeatures, testLabels) = fe.extract_testing_features()
     
+    #################################
+    # CLASSIFICATION W/ NAIVE BAYES #
+    #################################
+    if useNB:
+        results = []
+        nb = NaiveBayes(pretrained=preTrainedNB)
+        if not preTrainedNB:
+            nb.train(trainFeatures, trainLabels)
+        results.extend(nb.validate(nb.predict(testFeatures), testLabels))
+        results = np.reshape(np.array(results), (1, 7))
+        df = pd.DataFrame(results, columns = ['-','-','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p'])
+        joblib.dump(df, './validation_results/nb_testing_results.res')
+        print(df)
+
+    #########################
+    # CLASSIFICATION W/ KNN #
+    #########################
+    if useKNN:
+        # Initialize a bunch of KNN classifiers with varying K values and distance metrics
+        K = [k for k in range(1, 9000, 100)]
+        results = []
+        for k in K:
+            knn = KNN(k, 'cityblock', pretrained=preTrainedKNNs)
+            if not preTrainedKNNs:
+                knn.train(trainFeatures, trainLabels)
+            results.extend(knn.validate(knn.predict(testFeatures), testLabels))
+        for k in K:
+            knn = KNN(k, 'euclidean', pretrained=preTrainedKNNs)
+            if not preTrainedKNNs:
+                knn.train(trainFeatures, trainLabels)
+            results.extend(knn.validate(knn.predict(testFeatures), testLabels))
+        for k in K:
+            knn = KNN(k, 'minkowski', pretrained=preTrainedKNNs)
+            if not preTrainedKNNs:
+                knn.train(trainFeatures, trainLabels)
+            results.extend(knn.validate(knn.predict(testFeatures), testLabels))
+        results = np.reshape(np.array(results), (270, 7))
+        df = pd.DataFrame(results, columns = ['metric','K','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p'])
+        joblib.dump(df, './validation_results/knn_testing_results.res')
+        print(df)
+        
     #########################
     # CLASSIFICATION W/ SVM #
     #########################
@@ -57,46 +98,6 @@ def main(args = None):
         joblib.dump(df, './validation_results/svm_testing_results.res')
         print(df)
 
-    #########################
-    # CLASSIFICATION W/ KNN #
-    #########################
-    if useKNN:
-        # Initialize a bunch of KNN classifiers with varying K values and distance metrics
-        K = [k for k in range(1, 9000, 100)]
-        results = []
-        for k in K:
-            knn = KNN(k, 'cityblock', pretrained=preTrainedKNNs)
-            if not preTrainedKNNs:
-                knn.train(trainFeatures, trainLabels)
-            results.extend(knn.validate(knn.predict(testFeatures), testLabels))
-        for k in K:
-            knn = KNN(k, 'euclidean', pretrained=preTrainedKNNs)
-            if not preTrainedKNNs:
-                knn.train(trainFeatures, trainLabels)
-            results.extend(knn.validate(knn.predict(testFeatures), testLabels))
-        for k in K:
-            knn = KNN(k, 'minkowski', pretrained=preTrainedKNNs)
-            if not preTrainedKNNs:
-                knn.train(trainFeatures, trainLabels)
-            results.extend(knn.validate(knn.predict(testFeatures), testLabels))
-        results = np.reshape(np.array(results), (270, 7))
-        df = pd.DataFrame(results, columns = ['metric','K','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p'])
-        joblib.dump(df, './validation_results/knn_testing_results.res')
-        print(df)
-
-    #################################
-    # CLASSIFICATION W/ NAIVE BAYES #
-    #################################
-    if useNB:
-        results = []
-        nb = NaiveBayes(pretrained=preTrainedNB)
-        if not preTrainedNB:
-            nb.train(trainFeatures, trainLabels)
-        results.extend(nb.validate(nb.predict(testFeatures), testLabels))
-        results = np.reshape(np.array(results), (1, 7))
-        df = pd.DataFrame(results, columns = ['-','-','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p'])
-        joblib.dump(df, './validation_results/nb_testing_results.res')
-        print(df)
     
     """imgs = [imread('./test/test1.png', as_gray=True),
             imread('./test/test2.png', as_gray=True),

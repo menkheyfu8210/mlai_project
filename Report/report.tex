@@ -23,7 +23,7 @@
 \affil[1]{VR472249, lorenzo.busellato\_02@studenti.univr.it}
 \onecolumn
 
-  \maketitle
+\maketitle
 \begin{abstract} Pedestrian detection is a key task in the computer vision field, given its obvious applications in surveillance systems, autonomous driving and robotics. 
 This work presents a pipeline for shallow-learning based pedestrian detection. The Histogram of Oriented Gradients (HOG)
 method for feature extraction is described and applied to the Daimler Mono Pedestrian Classification Benchmark Data Set. Three classification
@@ -32,6 +32,8 @@ with different sets of hyperparameters. The benchmarks are then compared against
 method in terms of accuracy in classification. Finally the best performing method is used to implement a full pedestrian detection pipeline.
 \end{abstract}
   \tableofcontents
+  \listoffigures
+  \listoftables  
   \clearpage
   \twocolumn
 
@@ -95,7 +97,7 @@ The data set used in this work is the Daimler Mono Pedestrian Classification Ben
 \centering
 \includegraphics[keepaspectratio,width=0.4\textwidth]{2}
 \end{minipage}
-\caption{Example figures from the training data set. On the left a non-pedestrian sample, on the right a pedestrian sample.}
+\caption[Example images from the dataset]{Example figures from the training data set. On the left a non-pedestrian sample, on the right a pedestrian sample.}
 \end{figure}
 
 In this work, data sets 1, 2 and 3 will be grouped together in a singular data set for the training of the models, as will data sets T1 and T2 for the testing.
@@ -169,6 +171,20 @@ concatenated with another three 1$\times$9 vectors composing a
 1$\times$36 vector, which is finally concatenated with another
 fourteen 1$\times$36 vectors, resulting in a 1$\times$3780 feature vector.
 
+\begin{figure}[h]
+\centering
+\includegraphics[keepaspectratio,width=0.9\columnwidth]{3}
+\caption[HOG representation of a non-pedestrian sample]{Histogram of Oriented Gradients representation of a non-pedestrian sample.}
+\label{fig:3}
+\end{figure}
+\begin{figure}[h]
+\centering
+\includegraphics[keepaspectratio,width=0.9\columnwidth]{4}
+\caption[HOG representation of a pedestrian sample]{Histogram of Oriented Gradients representation of a pedestrian sample.}
+\label{fig:4}
+\end{figure}
+
+A representation of the resulting feature vector can be seen in figures \ref{fig:3} and \ref{fig:4}. The representation is obtained by plotting the 9$\times$1 normalized histograms in each 8$\times$8 cell. The dominant direction of the histogram is able to capture contours, especially straight lines such as the frame of the window in figure \ref{fig:3} or the legs of the pedestrian in figure \ref{fig:4}. The gradient magnitudes also carry information on the lighting of the scene, with greater magnitudes corresponding to lighter areas.
 
 \subsection{Naive Bayes}
 
