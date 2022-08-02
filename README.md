@@ -1,10 +1,10 @@
-# Shallow-learning methods for pedestrian detection
+# Shallow-learning methods for pedestrian classification and detection in images
 
 This repository contains the code for the final project of the Machine Learning & Artificial Intelligence course of the Master's Degree in Computer Engineering for Robotics and Smart Industry @UniVR.
 
 ## Description
 
-The project explores various shallow-learning techniques for pedestrian classification and detection in images.
+TODO
 
 ## Getting Started
 
@@ -12,7 +12,6 @@ The project explores various shallow-learning techniques for pedestrian classifi
 
 The project has the following dependencies:
 
-* [SciPy](https://www.scipy.org/)
 * [scikit-image](https://scikit-image.org/)
 * [scikit-learn](https://scikit-learn.org/stable/)
 * [pandas](https://pandas.pydata.org/)

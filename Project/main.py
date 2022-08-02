@@ -10,12 +10,12 @@ def main(args = None):
     ############
     # SETTINGS #
     ############
-    useSVMs = False
-    preTrainedSVMs = False
+    useNB = True
+    preTrainedNB = False
     useKNN = False
     preTrainedKNNs = False
-    useNB = False
-    preTrainedNB = False
+    useSVMs = False
+    preTrainedSVMs = False
 
     ##################################
     # FEATURE EXTRACTION AND LOADING #
@@ -33,9 +33,9 @@ def main(args = None):
         if not preTrainedNB:
             nb.train(trainFeatures, trainLabels)
         results.extend(nb.validate(nb.predict(testFeatures), testLabels))
-        results = np.reshape(np.array(results), (1, 7))
-        df = pd.DataFrame(results, columns = ['-','-','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p'])
-        joblib.dump(df, './validation_results/nb_testing_results.res')
+        results = np.reshape(np.array(results), (1, 8))
+        df = pd.DataFrame(results, columns = ['-','-','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p', 'f1'])
+        joblib.dump(df, './Project/validation_results/nb_testing_results.res')
         print(df)
 
     #########################
@@ -60,9 +60,9 @@ def main(args = None):
             if not preTrainedKNNs:
                 knn.train(trainFeatures, trainLabels)
             results.extend(knn.validate(knn.predict(testFeatures), testLabels))
-        results = np.reshape(np.array(results), (270, 7))
-        df = pd.DataFrame(results, columns = ['metric','K','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p'])
-        joblib.dump(df, './validation_results/knn_testing_results.res')
+        results = np.reshape(np.array(results), (270, 8))
+        df = pd.DataFrame(results, columns = ['metric','K','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p', 'f1'])
+        joblib.dump(df, './Project/validation_results/knn_testing_results.res')
         print(df)
         
     #########################
@@ -93,9 +93,9 @@ def main(args = None):
             if not preTrainedSVMs:
                 svm.train(trainFeatures, trainLabels)
             results.extend(svm.validate(svm.predict(testFeatures), testLabels))
-        results = np.reshape(np.array(results), (20, 7))
-        df = pd.DataFrame(results, columns = ['kernel','C','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p'])
-        joblib.dump(df, './validation_results/svm_testing_results.res')
+        results = np.reshape(np.array(results), (20, 8))
+        df = pd.DataFrame(results, columns = ['kernel','C','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p', 'f1'])
+        joblib.dump(df, './Project/validation_results/svm_testing_results.res')
         print(df)
 
     

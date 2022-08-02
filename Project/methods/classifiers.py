@@ -4,13 +4,14 @@ import os
 import time
 
 from math import nan
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier, KernelDensity
 from sklearn.svm import SVC
 
 class Classifier():
-	"""Parent class for all classifier models.
+	"""Parent class for all classifier models. All children differ only in the
+	init method.
 
     Parameters
     ----------
@@ -47,7 +48,7 @@ class Classifier():
     """
 
 	def __init__(self, 
-				model_path='./models/', 
+				model_path='./Project/models/', 
 				model_name='unnamed', 
 				string='', 
 				parameter=nan) -> None:
@@ -146,8 +147,9 @@ class Classifier():
 		precision_p = round(precision_score(test_labels, prediction, pos_label=1), 3)
 		recall_np = round(recall_score(test_labels, prediction, pos_label=0), 3)
 		recall_p = round(recall_score(test_labels, prediction, pos_label=1), 3)
+		f1 = round(f1_score(test_labels, prediction), 3)
 		cfs = confusion_matrix(test_labels, prediction)
-		ret = np.array([self.string, self.parameter, accuracy, precision_np, precision_p, recall_np, recall_p]).T
+		ret = np.array([self.string, self.parameter, accuracy, precision_np, precision_p, recall_np, recall_p, f1]).T
 		if disp:
 			print("Model: " + self.model_name)
 			print(f"Classifier accuracy: {(accuracy)}%")
@@ -155,6 +157,7 @@ class Classifier():
 			print(f"Precision w.r.t class pedestrian: {precision_p}")
 			print(f"Recall w.r.t class non-pedestrian: {recall_np}")
 			print(f"Recall w.r.t class pedestrian: {recall_p}")
+			print(f"F1 score w.r.t class pedestrian: {f1}")
 			print('Confusion matrix:\n')
 			print(cfs)
 		return ret
@@ -192,7 +195,7 @@ class SVM(Classifier):
 			 	C=1.0, 
 				kernel='rbf', 
 				max_iter=10000,
-				model_path='./models/svm/', 
+				model_path='./Project/models/svm/', 
 				pretrained=False) -> None:
 		# Input arguments checks
 		kernels = ['linear', 'poly', 'rbf', 'sigmoid']
@@ -239,7 +242,7 @@ class KNN(Classifier):
 	def __init__(self, 
 				K, 
 				metric='euclidean', 
-				model_path='./models/knn/', 
+				model_path='./Project/models/knn/', 
 				pretrained=False) -> None:
 		# Input arguments checks
 		metrics = ['cityblock', 'euclidean', 'minkowski']
@@ -283,7 +286,7 @@ class NaiveBayes(Classifier):
     """
 
 	def __init__(self,  
-				model_path='./models/naive_bayes/', 
+				model_path='./Project/models/naive_bayes/', 
 				pretrained=False) -> None:
 		model_name = 'NaiveBayes.mod'
 		if pretrained: 

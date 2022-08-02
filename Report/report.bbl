@@ -64,5 +64,42 @@
     \field{volume}{1}
     \field{year}{2005}
   \endentry
+
+  \entry{3}{article}{}
+    \name{author}{2}{}{%
+      {{hash=MS}{%
+         family={Munder},
+         familyi={M\bibinitperiod},
+         given={Stefan},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=GDM}{%
+         family={Gavrila},
+         familyi={G\bibinitperiod},
+         given={Dariu\bibnamedelima M},
+         giveni={D\bibinitperiod\bibinitdelim M\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {IEEE}%
+    }
+    \strng{namehash}{MSGDM1}
+    \strng{fullhash}{MSGDM1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{number}{11}
+    \field{pages}{1863\bibrangedash 1868}
+    \field{title}{An experimental study on pedestrian classification}
+    \field{volume}{28}
+    \field{journaltitle}{IEEE transactions on pattern analysis and machine
+  intelligence}
+    \field{year}{2006}
+  \endentry
+
+  \entry{4}{misc}{}
+    \field{labeltitlesource}{title}
+    \field{howpublished}{\url{https://github.com/lbusellato/mlai\_project}}
+    \field{title}{mlai\_project}
+  \endentry
 \enddatalist
 \endinput
