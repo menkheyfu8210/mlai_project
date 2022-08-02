@@ -80,15 +80,15 @@ class Classifier():
         train_labels : array-like of shape (n_samples,)
             Class labels associated to the training features.
         """
-		if os.path.exists(self.model_path + self.model_name):
-			print("Training " + self.model_name + self.model_name)
+		if not os.path.exists(self.model_path + self.model_name):
+			print("Training " + self.model_name)
 			start_time = time.time()
 			# Train the model on the provided data
-			self.model.fit(train_features, train_labels)
+			trained_model = self.model.fit(train_features, train_labels)
 			elapsed = time.time() - start_time
 			print(f"Finished training (time elapsed: {elapsed}s), saving to: {self.model_path + self.model_name}")
 			# Save the model for future use
-			joblib.dump(self.model, self.model_path + self.model_name)
+			joblib.dump(trained_model, self.model_path + self.model_name)
 		else:
 			print('Model was already trained, skipping training.')
 
@@ -191,7 +191,7 @@ class SVM(Classifier):
 	def __init__(self, 
 			 	C=1.0, 
 				kernel='rbf', 
-				max_iter=1000,
+				max_iter=10000,
 				model_path='./models/svm/', 
 				pretrained=False) -> None:
 		# Input arguments checks
@@ -239,7 +239,7 @@ class KNN(Classifier):
 	def __init__(self, 
 				K, 
 				metric='euclidean', 
-				model_path='./models/', 
+				model_path='./models/knn/', 
 				pretrained=False) -> None:
 		# Input arguments checks
 		metrics = ['cityblock', 'euclidean', 'minkowski']
@@ -270,14 +270,11 @@ class NaiveBayes(Classifier):
 
     Parameters
     ----------
-    alpha : float, default = 1.0
-        Smoothing parameter. 0.0 for no smoothing.
-
     model_path : str, default='./models/naive_bayes/'
         Specifies where to save and look for trained models.
 
 	pretrained : bool, default=True
-		Specifies whether or not the SVM was already trained.
+		Specifies whether or not the model was already trained.
 
     Attributes
     ----------
@@ -285,18 +282,14 @@ class NaiveBayes(Classifier):
 		Instance of sklearn.naive_bayes.GaussianNB
     """
 
-	def __init__(self, 
-				alpha=1.0, 
+	def __init__(self,  
 				model_path='./models/naive_bayes/', 
 				pretrained=False) -> None:
-		# Input arguments checks
-		if alpha <= 0:
-			raise ValueError('alpha value must be strictly positive.')
-		model_name = 'alpha' + str(alpha) + 'NaiveBayes.mod'
+		model_name = 'NaiveBayes.mod'
 		if pretrained: 
-			super().load()
+			super().load(model_path, model_name, nan, '')
 		else:
 			# Initialize the model
-			print(f"Initializing NaiveBayes w/ alpha={alpha}")
-			self.model = GaussianNB(alpha=alpha)
-		super().__init__(model_path, model_name, '', alpha)
+			print(f"Initializing NaiveBayes")
+			self.model = GaussianNB()
+		super().__init__(model_path, model_name, '', nan)

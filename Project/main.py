@@ -1,13 +1,9 @@
-import cv2
 import joblib
 import numpy as np
 import pandas as pd
-import time
 
-from methods.classifiers import SVM, KNN
-from methods.detector import Detector
+from methods.classifiers import SVM, KNN, NaiveBayes
 from methods.feature_extractor import extractFeatures, loadFeatures
-from skimage.io import imread
 
 def main(args = None):
 
@@ -16,9 +12,11 @@ def main(args = None):
     ############
     preExtractedFeatures = True
     useSVMs = False
-    preTrainedSVMs = True
+    preTrainedSVMs = False
     useKNN = False
-    useParzenWindows = True
+    preTrainedKNNs = False
+    useNB = False
+    preTrainedNB = False
 
     ######################
     # FEATURE EXTRACTION #
@@ -32,7 +30,7 @@ def main(args = None):
     testFeatures = []
     testLabels = []
     # Load features and labels for testing
-    loadFeatures(testFeatures, testLabels, True)
+    loadFeatures(testFeatures, testLabels, test=True)
     
     #########################
     # CLASSIFICATION W/ SVM #
@@ -40,28 +38,28 @@ def main(args = None):
     # Train (or load) a bunch of SVMs with different kernels and varying 
     # regularization params, then validate each one
     if useSVMs:
-        C = [0.001, 0.01, 0.1, 1, 10]
+        C = [0.01, 0.1, 1, 10, 100]
         results = []
         for c in C:
             svm = SVM(C=c, kernel='linear', pretrained=preTrainedSVMs)
             if not preTrainedSVMs:
                 svm.train(trainFeatures, trainLabels)
-            results.extend(svm.validate(testFeatures, testLabels))
+            results.extend(svm.validate(svm.predict(testFeatures), testLabels))
         for c in C:
             svm = SVM(C=c, kernel='poly', pretrained=preTrainedSVMs)
             if not preTrainedSVMs:
                 svm.train(trainFeatures, trainLabels)
-            results.extend(svm.validate(testFeatures, testLabels))
+            results.extend(svm.validate(svm.predict(testFeatures), testLabels))
         for c in C:
             svm = SVM(C=c, kernel='sigmoid', pretrained=preTrainedSVMs)
             if not preTrainedSVMs:
                 svm.train(trainFeatures, trainLabels)
-            results.extend(svm.validate(testFeatures, testLabels))
+            results.extend(svm.validate(svm.predict(testFeatures), testLabels))
         for c in C:
             svm = SVM(C=c, kernel='rbf', pretrained=preTrainedSVMs)
             if not preTrainedSVMs:
                 svm.train(trainFeatures, trainLabels)
-            results.extend(svm.validate(testFeatures, testLabels))
+            results.extend(svm.validate(svm.predict(testFeatures), testLabels))
         results = np.reshape(np.array(results), (20, 7))
         df = pd.DataFrame(results, columns = ['kernel','C','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p'])
         joblib.dump(df, './validation_results/svm_testing_results.res')
@@ -72,31 +70,40 @@ def main(args = None):
     #########################
     if useKNN:
         # Initialize a bunch of KNN classifiers with varying K values and distance metrics
-        K0 = int(np.sqrt(len(trainFeatures)))
-        K = [K0 - 150, K0 - 100, K0 - 50, K0, K0 + 50, K0 + 100, K0 + 150]
+        K = [k for k in range(1, 9000, 100)]
         results = []
-        knn = KNN(K0, 'cityblock')
-        knn.train(trainFeatures, testFeatures)
         for k in K:
-            knn.K = k
-            print(f"cityblock K:{k}")
-            results.extend(knn.validate(trainLabels, testLabels))
-        knn = KNN(K0, 'euclidean')
-        knn.train(trainFeatures, testFeatures)
+            knn = KNN(k, 'cityblock', pretrained=preTrainedKNNs)
+            if not preTrainedKNNs:
+                knn.train(trainFeatures, trainLabels)
+            results.extend(knn.validate(knn.predict(testFeatures), testLabels))
         for k in K:
-            knn.K = k
-            print(f"euclidean K:{k}")
-            results.extend(knn.validate(trainLabels, testLabels))
-        knn = KNN(K0, 'minkowski')
-        knn.train(trainFeatures, testFeatures)
+            knn = KNN(k, 'euclidean', pretrained=preTrainedKNNs)
+            if not preTrainedKNNs:
+                knn.train(trainFeatures, trainLabels)
+            results.extend(knn.validate(knn.predict(testFeatures), testLabels))
         for k in K:
-            knn.K = k
-            print(f"minkowski K:{k}")
-            results.extend(knn.validate(trainLabels, testLabels))
-        joblib.dump(results, './validation_results/test.res')
-        results = np.reshape(np.array(results), (21, 7))
+            knn = KNN(k, 'minkowski', pretrained=preTrainedKNNs)
+            if not preTrainedKNNs:
+                knn.train(trainFeatures, trainLabels)
+            results.extend(knn.validate(knn.predict(testFeatures), testLabels))
+        results = np.reshape(np.array(results), (270, 7))
         df = pd.DataFrame(results, columns = ['metric','K','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p'])
         joblib.dump(df, './validation_results/knn_testing_results.res')
+        print(df)
+
+    #################################
+    # CLASSIFICATION W/ NAIVE BAYES #
+    #################################
+    if useNB:
+        results = []
+        nb = NaiveBayes(pretrained=preTrainedNB)
+        if not preTrainedNB:
+            nb.train(trainFeatures, trainLabels)
+        results.extend(nb.validate(nb.predict(testFeatures), testLabels))
+        results = np.reshape(np.array(results), (1, 7))
+        df = pd.DataFrame(results, columns = ['-','-','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p'])
+        joblib.dump(df, './validation_results/nb_testing_results.res')
         print(df)
     
     """imgs = [imread('./test/test1.png', as_gray=True),

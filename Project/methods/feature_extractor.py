@@ -4,14 +4,29 @@ import os
 
 from skimage.feature import hog
 from skimage.io import imread
-from skimage.transform import resize
+
 
 def extractFeatures():
     """Extracts the Histogram Of Gradients feature vectors from the dataset.
     """
-    # Paths to the dataset
-    posPath = './../Dataset/Pedestrians/'
-    negPath = './../Dataset/NonPedestrianPatches/'
+    # Paths to the training datasets
+    base_1_neg_train = './../Dataset/DC-ped-dataset_base/1/non-ped_examples/'
+    base_2_neg_train = './../Dataset/DC-ped-dataset_base/2/non-ped_examples/'
+    base_3_neg_train = './../Dataset/DC-ped-dataset_base/3/non-ped_examples/'
+    base_1_pos_train = './../Dataset/DC-ped-dataset_base/1/ped_examples/'
+    base_2_pos_train = './../Dataset/DC-ped-dataset_base/2/ped_examples/'
+    base_3_pos_train = './../Dataset/DC-ped-dataset_base/3/ped_examples/'
+    # Paths to the test datasets
+    base_t1_pos_test = './../Dataset/DC-ped-dataset_base/T1/ped_examples/'
+    base_t1_neg_test = './../Dataset/DC-ped-dataset_base/T1/non-ped_examples/'
+    base_t2_pos_test = './../Dataset/DC-ped-dataset_base/T2/ped_examples/'
+    base_t2_neg_test = './../Dataset/DC-ped-dataset_base/T2/non-ped_examples/'
+    # Group together the paths
+    posTrainPaths = [base_1_pos_train, base_2_pos_train, base_3_pos_train]
+    negTrainPaths = [base_1_neg_train, base_2_neg_train, base_3_neg_train]
+    posTestPaths = [base_t1_pos_test, base_t2_pos_test]
+    negTestPaths = [base_t1_neg_test, base_t2_neg_test]
+
     # Create directories if needed
     if not os.path.exists('./features/'):
         os.makedirs('./features/')
@@ -27,37 +42,39 @@ def extractFeatures():
     negTestFeatPath = './features/test/neg/'
     if not os.path.exists(negTestFeatPath):
         os.makedirs(negTestFeatPath)
-    # Extraction of the positive samples features
-    posSamples = glob.glob(os.path.join(posPath, '*'))
-    # Cutoff for training/test split
-    P = int(len(posSamples) * 0.8)
-    i = 0
-    for imgPath in posSamples:
-        im = imread(imgPath)
-        im = resize(im, (128, 64), anti_aliasing=True)
-        f = hog(im, cells_per_block=(2,2))
-        fn = os.path.split(imgPath)[1].split(".")[0] + ".feat"
-        if i < P:
-            path = os.path.join(posTrainFeatPath, fn)
-        else:
-            path = os.path.join(posTestFeatPath, fn)
-        i = i + 1
-        joblib.dump(f, path)
-    # Extraction of the negative samples features
-    negSamples = glob.glob(os.path.join(negPath, '*'))
-    # Cutoff for training/test split
-    N = int(len(negSamples) * 0.8)
-    i = 0
-    for imgPath in negSamples:
-        im = imread(imgPath)
-        f = hog(im, cells_per_block=(2,2))
-        fn = os.path.split(imgPath)[1].split(".")[0] + ".feat"
-        if i < N:
-            path = os.path.join(negTrainFeatPath, fn)
-        else:
-            path = os.path.join(negTestFeatPath, fn)
-        i = i + 1
-        joblib.dump(f, path)
+
+    for path in posTrainPaths:
+        samples = glob.glob(os.path.join(path, '*'))
+        for sample in samples:
+            img = imread(sample)
+            feature = hog(img, cells_per_block=(2,2))
+            fileName = os.path.split(sample)[1].split(".")[0] + ".feat"
+            joblib.dump(feature, os.path.join(posTrainFeatPath, fileName))
+    print("Extracted positive training features.")
+    for path in negTrainPaths:
+        samples = glob.glob(os.path.join(path, '*'))
+        for sample in samples:
+            img = imread(sample)
+            feature = hog(img, cells_per_block=(2,2))
+            fileName = os.path.split(sample)[1].split(".")[0] + ".feat"
+            joblib.dump(feature, os.path.join(negTrainFeatPath, fileName))
+    print("Extracted negative training features.")
+    for path in posTestPaths:
+        samples = glob.glob(os.path.join(path, '*'))
+        for sample in samples:
+            img = imread(sample)
+            feature = hog(img, cells_per_block=(2,2))
+            fileName = os.path.split(sample)[1].split(".")[0] + ".feat"
+            joblib.dump(feature, os.path.join(posTestFeatPath, fileName))
+    print("Extracted positive testing features.")
+    for path in negTestPaths:
+        samples = glob.glob(os.path.join(path, '*'))
+        for sample in samples:
+            img = imread(sample)
+            feature = hog(img, cells_per_block=(2,2))
+            fileName = os.path.split(sample)[1].split(".")[0] + ".feat"
+            joblib.dump(feature, os.path.join(negTestFeatPath, fileName))
+    print("Extracted negative testing features.")
 
 def loadFeatures(features, labels, test=False):
     """Loads pre-extracted feature vectors.

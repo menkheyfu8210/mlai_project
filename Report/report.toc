@@ -1,0 +1,33 @@
+\boolfalse {citerequest}\boolfalse {citetracker}\boolfalse {pagetracker}\boolfalse {backtracker}\relax 
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {I}Introduction}{2}{section.1}%
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {II}Objectives}{2}{section.2}%
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {III}Dataset}{2}{section.3}%
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {IV}Methodology}{2}{section.4}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {\mbox {IV-A}}Histogram of Oriented Gradients}{2}{subsection.4.1}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {\mbox {IV-B}}Naive Bayes}{2}{subsection.4.2}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {\mbox {IV-C}}K-Nearest Neighbors}{2}{subsection.4.3}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {\mbox {IV-D}}Support Vector Machine}{2}{subsection.4.4}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {\mbox {IV-E}}Hard-negative mining}{2}{subsection.4.5}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {\mbox {IV-F}}Pedestrian detection}{2}{subsection.4.6}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {\mbox {IV-G}}Non-maximum suppression}{2}{subsection.4.7}%
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {V}Experiments and results}{2}{section.5}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {\mbox {V-A}}Adopted metrics}{2}{subsection.5.1}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {\mbox {V-B}}Performed experiments}{2}{subsection.5.2}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {\mbox {V-C}}Results}{2}{subsection.5.3}%
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {VI}Conclusions}{2}{section.6}%

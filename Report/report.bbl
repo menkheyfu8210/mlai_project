@@ -1,0 +1,68 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.1 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated as
+% required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+\datalist[entry]{none/global//global/global}
+  \entry{1}{report}{}
+    \name{author}{1}{}{%
+      {{hash=SU}{%
+         family={Shankar},
+         familyi={S\bibinitperiod},
+         given={Umesh},
+         giveni={U\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{SU1}
+    \strng{fullhash}{SU1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Pedestrian roadway fatalities}
+    \field{type}{techreport}
+    \field{year}{2003}
+  \endentry
+
+  \entry{2}{inproceedings}{}
+    \name{author}{2}{}{%
+      {{hash=DN}{%
+         family={Dalal},
+         familyi={D\bibinitperiod},
+         given={Navneet},
+         giveni={N\bibinitperiod},
+      }}%
+      {{hash=TB}{%
+         family={Triggs},
+         familyi={T\bibinitperiod},
+         given={Bill},
+         giveni={B\bibinitperiod},
+      }}%
+    }
+    \list{organization}{1}{%
+      {Ieee}%
+    }
+    \strng{namehash}{DNTB1}
+    \strng{fullhash}{DNTB1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{booktitle}{2005 IEEE computer society conference on computer vision
+  and pattern recognition (CVPR'05)}
+    \field{pages}{886\bibrangedash 893}
+    \field{title}{Histograms of oriented gradients for human detection}
+    \field{volume}{1}
+    \field{year}{2005}
+  \endentry
+\enddatalist
+\endinput
