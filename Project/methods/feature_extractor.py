@@ -15,26 +15,19 @@ class FeatureExtractor():
 
     def __init__(self) -> None:
         # Create directories if needed
-        if not os.path.exists('./Project/features/'):
-            os.makedirs('./Project/features/')
+        self.featPath = './Project/features/'
+        if not os.path.exists(self.featPath ):
+            os.makedirs(self.featPath)
         flag = True
-        self.posTrainFeatPath = './Project/features/train/pos/'
-        if not os.path.exists(self.posTrainFeatPath):
-            os.makedirs(self.posTrainFeatPath)
-            flag = False
-        self.negTrainFeatPath = './Project/features/train/neg/'
-        if not os.path.exists(self.negTrainFeatPath):
-            os.makedirs(self.negTrainFeatPath)
+        self.trainFeatPath = './Project/features/train/'
+        if not os.path.exists(self.trainFeatPath):
+            os.makedirs(self.trainFeatPath)
             flag = False
         self.preExtractedTrainFeat = flag
         flag = True
-        self.posTestFeatPath = './Project/features/test/pos/'
-        if not os.path.exists(self.posTestFeatPath):
-            os.makedirs(self.posTestFeatPath)
-            flag = False
-        self.negTestFeatPath = './Project/features/test/neg/'
-        if not os.path.exists(self.negTestFeatPath):
-            os.makedirs(self.negTestFeatPath)
+        self.testFeatPath = './Project/features/test/'
+        if not os.path.exists(self.testFeatPath):
+            os.makedirs(self.testFeatPath)
             flag = False
         self.preExtractedTestFeat = flag
         # Paths to the training datasets
@@ -69,9 +62,12 @@ class FeatureExtractor():
                 raise FileNotFoundError("Can't extract features from " + path + ": no such directory.")
 
     def extract_training_features(self):
-        """Extracts the Histogram Of Gradients feature vectors from the training dataset.
+        """Extracts the Histogram Of Gradients feature vectors from the training 
+        dataset, and also creates a list of labels.
         """
         if not self.preExtractedTrainFeat:
+            features = []
+            labels = []
             print('Starting training feature extraction. This will take a while.')
             for (i, path) in enumerate(self.posTrainPaths):
                 # Set up a progress bar on the enumerable
@@ -82,9 +78,8 @@ class FeatureExtractor():
                     img = imread(sample)
                     img = rescale(img, SCALE_FACTOR, anti_aliasing=False)
                     # Extract the hog feature from the image
-                    feature = hog(img, cells_per_block=(2,2))
-                    fileName = str(i + 1) + os.path.split(sample)[1].split(".")[0] + ".feat"
-                    joblib.dump(feature, os.path.join(self.posTrainFeatPath, fileName))
+                    features.append(hog(img, cells_per_block=(2,2)))
+                    labels.append(1)
             for (i, path) in enumerate(self.negTrainPaths):
                 # Set up a progress bar on the enumerable
                 pbar = tqdm(glob.glob(os.path.join(path, '*')))
@@ -93,15 +88,19 @@ class FeatureExtractor():
                     img = imread(sample)
                     img = rescale(img, SCALE_FACTOR, anti_aliasing=False)
                     # Extract the hog feature from the image
-                    feature = hog(img, cells_per_block=(2,2))
-                    fileName = str(i + 1) + os.path.split(sample)[1].split(".")[0] + ".feat"
-                    joblib.dump(feature, os.path.join(self.negTrainFeatPath, fileName))
+                    features.append(hog(img, cells_per_block=(2,2)))
+                    labels.append(0)
+            # Save the features and labels
+            joblib.dump(features, os.path.join(self.trainFeatPath, 'training_features.feat'))
+            joblib.dump(labels, os.path.join(self.trainFeatPath, 'training_labels.feat'))
         return self.load_train_features()
         
     def extract_testing_features(self):
         """Extracts the Histogram Of Gradients feature vectors from the testing dataset.
         """
         if not self.preExtractedTestFeat:
+            features = []
+            labels = []
             print('Starting testing feature extraction. This will take a while.')
             for (i, path) in enumerate(self.posTestPaths):
                 # Set up a progress bar on the enumerable
@@ -111,9 +110,8 @@ class FeatureExtractor():
                     img = imread(sample)
                     img = rescale(img, SCALE_FACTOR, anti_aliasing=False)
                     # Extract the hog feature from the image
-                    feature = hog(img, cells_per_block=(2,2))
-                    fileName = str(i + 1) + os.path.split(sample)[1].split(".")[0] + ".feat"
-                    joblib.dump(feature, os.path.join(self.posTestFeatPath, fileName))
+                    features.append(hog(img, cells_per_block=(2,2)))
+                    labels.append(1)
             for (i, path) in enumerate(self.negTestPaths):
                 # Set up a progress bar on the enumerable
                 pbar = tqdm(glob.glob(os.path.join(path, '*')))
@@ -122,55 +120,27 @@ class FeatureExtractor():
                     img = imread(sample)
                     img = rescale(img, SCALE_FACTOR, anti_aliasing=False)
                     # Extract the hog feature from the image
-                    feature = hog(img, cells_per_block=(2,2))
-                    fileName = str(i + 1) + os.path.split(sample)[1].split(".")[0] + ".feat"
-                    joblib.dump(feature, os.path.join(self.negTestFeatPath, fileName))
+                    features.append(hog(img, cells_per_block=(2,2)))
+                    labels.append(0)
+            # Save the features and labels
+            joblib.dump(features, os.path.join(self.testFeatPath, 'testing_features.feat'))
+            joblib.dump(labels, os.path.join(self.testFeatPath, 'testing_labels.feat'))
         return self.load_test_features()
 
     def load_train_features(self):
         """Loads pre-extracted training feature vectors.
         """
-        print('Starting to load training features. This will take a while.')
-        features = []
-        labels = []
-        # Set up a progress bar on the enumerable
-        pbar = tqdm(glob.glob(os.path.join(self.posTrainFeatPath, '*')))
-        # Load the positive features
-        for path in pbar:
-            pbar.set_description('Loading positive training features')
-            f = joblib.load(path)
-            features.append(f)
-            labels.append(1)
-        # Set up a progress bar on the enumerable
-        pbar = tqdm(glob.glob(os.path.join(self.negTrainFeatPath, '*')))
-        # Load the negative features
-        for path in pbar:
-            pbar.set_description('Loading negative training features')
-            f = joblib.load(path)
-            features.append(f)
-            labels.append(0)
+        print('Loading training features... ', end='')
+        features = joblib.load(os.path.join(self.trainFeatPath, 'training_features.feat'))
+        labels = joblib.load(os.path.join(self.trainFeatPath, 'training_labels.feat'))
+        print('Done.')
         return (features, labels)
 
     def load_test_features(self):
         """Loads pre-extracted testing feature vectors.
         """
-        print('Starting to load testing features. This will take a while.')
-        features = []
-        labels = []
-        # Set up a progress bar on the enumerable
-        pbar = tqdm(glob.glob(os.path.join(self.posTestFeatPath, '*')))
-        # Load the positive features
-        for path in pbar:
-            pbar.set_description('Loading positive testing features')
-            f = joblib.load(path)
-            features.append(f)
-            labels.append(1)
-        # Set up a progress bar on the enumerable
-        pbar = tqdm(glob.glob(os.path.join(self.negTestFeatPath, '*')))
-        # Load the negative features
-        for path in pbar:
-            pbar.set_description('Loading negative testing features')
-            f = joblib.load(path)
-            features.append(f)
-            labels.append(0)
+        print('Loading testing features... ', end='')
+        features = joblib.load(os.path.join(self.testFeatPath, 'testing_features.feat'))
+        labels = joblib.load(os.path.join(self.testFeatPath, 'testing_labels.feat'))
+        print('Done.')
         return (features, labels)

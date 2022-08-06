@@ -6,11 +6,14 @@
 \BOOKMARK [2][-]{subsection.4.2}{Naive Bayes}{section.4}% 6
 \BOOKMARK [2][-]{subsection.4.3}{K-Nearest Neighbors}{section.4}% 7
 \BOOKMARK [2][-]{subsection.4.4}{Support Vector Machines}{section.4}% 8
-\BOOKMARK [2][-]{subsection.4.5}{Hard-negative mining}{section.4}% 9
-\BOOKMARK [2][-]{subsection.4.6}{Pedestrian detection}{section.4}% 10
-\BOOKMARK [2][-]{subsection.4.7}{Non-maximum suppression}{section.4}% 11
-\BOOKMARK [1][-]{section.5}{Experiments and results}{}% 12
-\BOOKMARK [2][-]{subsection.5.1}{Adopted metrics}{section.5}% 13
-\BOOKMARK [2][-]{subsection.5.2}{Performed experiments}{section.5}% 14
-\BOOKMARK [2][-]{subsection.5.3}{Results}{section.5}% 15
-\BOOKMARK [1][-]{section.6}{Conclusions}{}% 16
+\BOOKMARK [2][-]{subsection.4.5}{Neural networks}{section.4}% 9
+\BOOKMARK [2][-]{subsection.4.6}{Hard-negative mining}{section.4}% 10
+\BOOKMARK [2][-]{subsection.4.7}{Pedestrian detection}{section.4}% 11
+\BOOKMARK [2][-]{subsection.4.8}{Non-maximum suppression}{section.4}% 12
+\BOOKMARK [1][-]{section.5}{Implementation}{}% 13
+\BOOKMARK [1][-]{section.6}{Experiments and results}{}% 14
+\BOOKMARK [2][-]{subsection.6.1}{Adopted metrics}{section.6}% 15
+\BOOKMARK [2][-]{subsection.6.2}{Performed experiments}{section.6}% 16
+\BOOKMARK [2][-]{subsection.6.3}{Results}{section.6}% 17
+\BOOKMARK [1][-]{section.7}{Conclusions}{}% 18
+\BOOKMARK [1][-]{section*.3}{Appendix A: Measured metrics}{}% 19

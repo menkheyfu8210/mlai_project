@@ -1,12 +1,12 @@
 import joblib
 import numpy as np
 import os
-import time
 
 from math import nan
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
 from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier, KernelDensity
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 
 class Classifier():
@@ -82,16 +82,12 @@ class Classifier():
             Class labels associated to the training features.
         """
 		if not os.path.exists(self.model_path + self.model_name):
-			print("Training " + self.model_name)
-			start_time = time.time()
 			# Train the model on the provided data
 			trained_model = self.model.fit(train_features, train_labels)
-			elapsed = time.time() - start_time
-			print(f"Finished training (time elapsed: {elapsed}s), saving to: {self.model_path + self.model_name}")
 			# Save the model for future use
 			joblib.dump(trained_model, self.model_path + self.model_name)
 		else:
-			print('Model was already trained, skipping training.')
+			self.load()
 
 	def predict(self, test_features):
 		"""Make a prediction on testing data.
@@ -108,11 +104,7 @@ class Classifier():
 		feature.
         """
 		if os.path.exists(self.model_path + self.model_name):
-			start_time = time.time()
-			prediction = self.model.predict(test_features)
-			elapsed = time.time() - start_time
-			print(f"Finished predicting (time elapsed: {elapsed}s).")
-			return prediction
+			return self.model.predict(test_features)
 		else: 
 			raise RuntimeError('Model not trained.')  
 
@@ -206,13 +198,12 @@ class SVM(Classifier):
 		if kernel not in kernels:
 			raise ValueError('Kernel type not recognized. Possible options are: ' +
 				'"linear", "poly", "rbf", "sigmoid".')
-		model_name = kernel + 'C' + str(C).replace('.','') + 'SVM.mod'
+		model_name = kernel + 'C' + str(C).replace('.','') + '.mod'
 		super().__init__(model_path, model_name, kernel, C)
 		if pretrained: 
 			super().load()
 		else:
 			# Initialize the model
-			print("Initializing " + kernel + f" SVM w/ C={C}")
 			self.model = SVC(C=C, kernel=kernel, max_iter=max_iter)
 
 class KNN(Classifier):
@@ -256,13 +247,12 @@ class KNN(Classifier):
 			'euclidean' : 2, 
 			'minkowski' : 3
 		}
-		model_name = metric + 'K' + str(K) + 'KNN.mod'
+		model_name = metric + 'K' + str(K) + '.mod'
 		super().__init__(model_path, model_name, metric, K)
 		if pretrained: 
 			super().load()
 		else:
 			# Initialize the model
-			print("Initializing " + metric + f" KNN w/ K={K}")
 			self.model = KNeighborsClassifier(n_neighbors=K, 
 											p=p_dict[metric], 
 											metric=metric)
@@ -295,4 +285,36 @@ class NaiveBayes(Classifier):
 			# Initialize the model
 			print(f"Initializing NaiveBayes")
 			self.model = GaussianNB()
+		super().__init__(model_path, model_name, '', nan)
+		
+class NeuralNetwork(Classifier):
+	"""Neural network based classification. This is a wrapper class around
+	sklearn's MLPClassifier class.
+
+    Parameters
+    ----------
+    model_path : str, default='./models/neural_network/'
+        Specifies where to save and look for trained models.
+
+	pretrained : bool, default=True
+		Specifies whether or not the model was already trained.
+
+    Attributes
+    ----------
+	model : object
+		Instance of sklearn.neural_network.MLPClassifier
+    """
+
+	def __init__(self,  
+				model_path='./Project/models/neural_network/', 
+				pretrained=False) -> None:
+		first_hidden_layer_size = 420
+		second_hidden_layer_size = 140
+		model_name = 'H' + str(first_hidden_layer_size) + 'H' + str(second_hidden_layer_size) + 'NN.mod'
+		if pretrained: 
+			super().load(model_path, model_name, nan, '')
+		else:
+			# Initialize the model
+			print(f"Initializing NeuralNetwork")
+			self.model = MLPClassifier(hidden_layer_sizes=(first_hidden_layer_size, second_hidden_layer_size), random_state=1)
 		super().__init__(model_path, model_name, '', nan)

@@ -1,21 +1,26 @@
 import joblib
 import numpy as np
 import pandas as pd
+import warnings 
+warnings.filterwarnings("ignore")
 
-from methods.classifiers import SVM, KNN, NaiveBayes
+from methods.classifiers import SVM, KNN, NaiveBayes, NeuralNetwork
 from methods.feature_extractor import FeatureExtractor
+from tqdm import tqdm
 
 def main(args = None):
 
     ############
     # SETTINGS #
     ############
-    useNB = True
-    preTrainedNB = False
+    useNB = False
+    preTrainedNB = True
     useKNN = False
-    preTrainedKNNs = False
+    preTrainedKNNs = True
     useSVMs = False
-    preTrainedSVMs = False
+    preTrainedSVMs = True
+    useNN = True
+    preTrainedNN = False
 
     ##################################
     # FEATURE EXTRACTION AND LOADING #
@@ -36,6 +41,7 @@ def main(args = None):
         results = np.reshape(np.array(results), (1, 8))
         df = pd.DataFrame(results, columns = ['-','-','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p', 'f1'])
         joblib.dump(df, './Project/validation_results/nb_testing_results.res')
+        print('Naive Bayes testing results:')
         print(df)
 
     #########################
@@ -43,26 +49,27 @@ def main(args = None):
     #########################
     if useKNN:
         # Initialize a bunch of KNN classifiers with varying K values and distance metrics
-        K = [k for k in range(1, 9000, 100)]
+        pbar = tqdm([1, 5, 11, 21, 51, 75, 101, 251, 501, 1001, 2501, 5001, 7501, 10001, 15001, 19001])
         results = []
-        for k in K:
+        for k in pbar:
             knn = KNN(k, 'cityblock', pretrained=preTrainedKNNs)
             if not preTrainedKNNs:
+                pbar.set_description('Training Cityblock KNN w/ K=' + str(k))
                 knn.train(trainFeatures, trainLabels)
+            pbar.set_description('Testing Cityblock KNN w/ K=' + str(k))
             results.extend(knn.validate(knn.predict(testFeatures), testLabels))
-        for k in K:
+        pbar = tqdm([1, 5, 11, 21, 51, 75, 101, 251, 501, 1001, 2501, 5001, 7501, 10001, 15001, 19001])
+        for k in pbar:
             knn = KNN(k, 'euclidean', pretrained=preTrainedKNNs)
             if not preTrainedKNNs:
+                pbar.set_description('Training Euclidean KNN w/ K=' + str(k))
                 knn.train(trainFeatures, trainLabels)
+            pbar.set_description('Testing Euclidean KNN w/ K=' + str(k))
             results.extend(knn.validate(knn.predict(testFeatures), testLabels))
-        for k in K:
-            knn = KNN(k, 'minkowski', pretrained=preTrainedKNNs)
-            if not preTrainedKNNs:
-                knn.train(trainFeatures, trainLabels)
-            results.extend(knn.validate(knn.predict(testFeatures), testLabels))
-        results = np.reshape(np.array(results), (270, 8))
+        results = np.reshape(np.array(results), (32, 8))
         df = pd.DataFrame(results, columns = ['metric','K','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p', 'f1'])
         joblib.dump(df, './Project/validation_results/knn_testing_results.res')
+        print('KNN testing results:')
         print(df)
         
     #########################
@@ -71,33 +78,58 @@ def main(args = None):
     # Train (or load) a bunch of SVMs with different kernels and varying 
     # regularization params, then validate each one
     if useSVMs:
-        C = [0.01, 0.1, 1, 10, 100]
+        pbar = tqdm([0.01, 0.1, 1, 10, 100])
         results = []
-        for c in C:
+        for c in pbar:
             svm = SVM(C=c, kernel='linear', pretrained=preTrainedSVMs)
             if not preTrainedSVMs:
+                pbar.set_description('Training Linear SVM w/ C=' + str(c))
                 svm.train(trainFeatures, trainLabels)
+            pbar.set_description('Testing Linear SVM w/ C=' + str(c))
             results.extend(svm.validate(svm.predict(testFeatures), testLabels))
-        for c in C:
+        pbar = tqdm([0.01, 0.1, 1, 10, 100])
+        for c in pbar:
             svm = SVM(C=c, kernel='poly', pretrained=preTrainedSVMs)
             if not preTrainedSVMs:
+                pbar.set_description('Training Poly SVM w/ C=' + str(c))
                 svm.train(trainFeatures, trainLabels)
+            pbar.set_description('Testing Poly SVM w/ C=' + str(c))
             results.extend(svm.validate(svm.predict(testFeatures), testLabels))
-        for c in C:
+        pbar = tqdm([0.01, 0.1, 1, 10, 100])
+        for c in pbar:
             svm = SVM(C=c, kernel='sigmoid', pretrained=preTrainedSVMs)
             if not preTrainedSVMs:
+                pbar.set_description('Training Sigmoid SVM w/ C=' + str(c))
                 svm.train(trainFeatures, trainLabels)
+            pbar.set_description('Testing Sigmoid SVM w/ C=' + str(c))
             results.extend(svm.validate(svm.predict(testFeatures), testLabels))
-        for c in C:
+        pbar = tqdm([0.01, 0.1, 1, 10, 100])
+        for c in pbar:
             svm = SVM(C=c, kernel='rbf', pretrained=preTrainedSVMs)
             if not preTrainedSVMs:
+                pbar.set_description('Training RBF SVM w/ C=' + str(c))
                 svm.train(trainFeatures, trainLabels)
+            pbar.set_description('Testing RBF SVM w/ C=' + str(c))
             results.extend(svm.validate(svm.predict(testFeatures), testLabels))
         results = np.reshape(np.array(results), (20, 8))
         df = pd.DataFrame(results, columns = ['kernel','C','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p', 'f1'])
         joblib.dump(df, './Project/validation_results/svm_testing_results.res')
         print(df)
 
+    ####################################
+    # CLASSIFICATION W/ NEURAL NETWORK #
+    ####################################
+    if useNN:
+        results = []
+        nb = NeuralNetwork(pretrained=preTrainedNN)
+        if not preTrainedNN:
+            nb.train(trainFeatures, trainLabels)
+        results.extend(nb.validate(nb.predict(testFeatures), testLabels))
+        results = np.reshape(np.array(results), (1, 8))
+        df = pd.DataFrame(results, columns = ['-','-','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p', 'f1'])
+        joblib.dump(df, './Project/validation_results/nn_testing_results.res')
+        print('Neural Network testing results:')
+        print(df)
     
     """imgs = [imread('./test/test1.png', as_gray=True),
             imread('./test/test2.png', as_gray=True),

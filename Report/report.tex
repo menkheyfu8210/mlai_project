@@ -31,14 +31,12 @@
 \maketitle
 \begin{abstract} Pedestrian detection is a key task in the computer vision field, given its obvious applications in surveillance systems, autonomous driving and robotics. 
 This work presents a pipeline for shallow-learning based pedestrian detection. The Histogram of Oriented Gradients (HOG)
-method for feature extraction is described and applied to the Daimler Mono Pedestrian Classification Benchmark Data Set. Three classification
-techniques, Support Vector Machines (SVMs), K-Nearest Neighbors (KNN) and Naive Bayes, are described and benchmarked
+method for feature extraction is described and applied to the Daimler Mono Pedestrian Classification Benchmark Data Set. Four classification
+techniques, Support Vector Machines (SVMs), K-Nearest Neighbors (KNN), Naive Bayes and a shallow neural network, are described and benchmarked
 with different sets of hyperparameters. The benchmarks are then compared against each other to determine the best performing
 method in terms of accuracy in classification. Finally the best performing classifier is showcased by using it in a full pipeline for pedestrian detection applied to a video sequence.
 \end{abstract}
   \tableofcontents
-  \listoffigures
-  \listoftables  
   \clearpage
   \twocolumn
 
@@ -69,14 +67,14 @@ and implemented. Specifically, the Histogram of Oriented
 Gradients (HOG) method will be used to extract features from
 images, because it is known\cite{2} that it is the best performing non-deep learning based feature extractor for human detection. The classification of images will then be implemented
 using non-deep learning methods, namely Support Vector
-Machines (SVMs), K-Nearest Neighbors (KNN) and Naive Bayes. Finally the best performing classifier will be used
+Machines (SVMs), K-Nearest Neighbors (KNN), Naive Bayes and a shallow neural network. Finally the best performing classifier will be used
 to implement a pedestrian detector.
 
-The details of the implementation can be found on the project's GitHub page\cite{4}.
+The full details of the implementation can be found on the project's GitHub page\cite{4}.
 
 The main objectives of this work are described in section
 \ref{sec:obj}. The data set and methodology employed are described in
-sections \ref{sec:data} and \ref{sec:meth}. The experimental evaluation is presented
+sections \ref{sec:data} and \ref{sec:meth}. The implementation of the methods is briefly discussed in section \ref{sec:imp}. The experimental evaluation is presented
 in section \ref{sec:exp}. The conclusions are summarized in section \ref{sec:conc}.
 
 \section{Objectives}
@@ -177,13 +175,13 @@ concatenated with another three 1$\times$9 vectors composing a
 1$\times$36 vector, which is finally concatenated with another
 fourteen 1$\times$36 vectors, resulting in a 1$\times$3780 feature vector.
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[keepaspectratio,width=0.9\columnwidth]{3}
 \caption[HOG representation of a non-pedestrian sample]{Histogram of Oriented Gradients representation of a non-pedestrian sample.}
 \label{fig:3}
 \end{figure}
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[keepaspectratio,width=0.9\columnwidth]{4}
 \caption[HOG representation of a pedestrian sample]{Histogram of Oriented Gradients representation of a pedestrian sample.}
@@ -265,14 +263,23 @@ as:
 D(X,Y)=\left(\sum\limits_{i=1}^n\abs{x_i-y_i}^p\right)^{\frac{1}{p}}
 \end{equation*}
 
-For $p=1$ the metric reduces to the so-called Cityblock metric, which is the sum of the absolute differences of the cartesian coordinates of the points. For $p=2$ the metric reduces to the Euclidean distance. In this work the model will be employed with $p=1,2,3$, showing the differences in classifier performance in the three cases.
+For $p=1$ the metric reduces to the so-called Cityblock metric, which is the sum of the absolute differences of the cartesian coordinates of the points. For $p=2$ the metric reduces to the Euclidean distance. In this work the model will be employed with $p=1,2$, showing the differences in classifier performance in the two cases.
 
 \subsection{Support Vector Machines}
 
 Support Vector Machines (SVMs) are a class of supervised learning algorithms whose main idea is to find an optimal hyperplane in an $n$-dimensional space, with $n$ number of features, that maximizes the distance, called margin, between the classes of data points. Such an hyperplane constitutes the decision boundary used by a classifier to classify data points, on the basis of which "side" of the hyperplane they fall in. The position and orientation of the hyperplane are influenced by the data points closer to it, which are called support vectors.
 
+If data is not linearly separable in its original space, which is often the case, a transformation to an higher dimensional space is introduced in order to achieve linear separability. This transformation is called kernel
 
+The main kinds of kernels are:
+\begin{itemize}
+\item Linear 
+\item Polynomial 
+\item Sigmoid
+\item Radial Basis Function (RBF)
+\end{itemize}
 
+\subsection{Neural networks}
 
 \subsection{Hard-negative mining}
 
@@ -282,12 +289,6 @@ To detect pedestrian in a given input image, a sliding window approach is used. 
 from the image. That is to say the image is progressively
 downsampled, obtaining a set of lower resolution versions of the input image at every scale.
 
-\begin{figure}[H]
-\centering
-\includegraphics[keepaspectratio,width=0.35\textwidth]{5}
-\caption{Gaussian pyramid}
-\end{figure}
-
 Then, a sliding window is passed over each image in the
 pyramid, and a HOG feature vector is computed for each step
 of the sliding.
@@ -296,6 +297,7 @@ previously described classifiers. If the classifier identifies the
 window as a pedestrian, the coordinates of its top left corner
 as well as the confidence score and its properly scaled width
 and height, define the bounding box around the pedestrian.
+
 This approach, while effective in locating pedestrians within
 an image, produces multiple proposals for the bounding box.
 This is because windows that contain only a portion of a
@@ -324,12 +326,15 @@ than some threshold.
 
 The list D then contains only the bounding boxes that have the highest confidence score and that intersect the least with other bounding boxes already in D.
 
+\section{Implementation}
+\label{sec:imp}
+
 \section{Experiments and results}
 \label{sec:exp}
 
 \subsection{Adopted metrics}
 
-To evaluate the performance of the various classifiers, the following metrics were used:
+To evaluate the performance of the various classifiers, the following metrics were used. Given TP the number of true positives, TN the number of true negatives, FP the number of false positives and FN the number of false negatives detected by the classifier:
 
 \begin{itemize}
 \item Accuracy:
@@ -356,25 +361,130 @@ F_1=2\frac{Precision_P\times Recall_P}{Precision_P + Recall_P}
 $F_1$ offers a trade-off between precision and recall. It is a perfectly suited metric for pedestrian detection because the pipeline needs to both maximize the detection rate, but also be sure that the detections actually are pedestrians, or in other words the higher the $F_1$ score, the better. For these reasons only the $F_1$ score related to the pedestrian label is calculated.
 \end{itemize}
 
-where TP is the number of true positives, TN the number of true negatives, FP the number of false positives and FN the number of false negatives detected by the classifier.
+Since its purpose is mostly that of showcasing the best performing classifier, the detector will not be subject to any metric evaluation.
 
 \subsection{Performed experiments}
 
+Naive Bayes was trained and tested with no particular parameters.
+
+Regarding KNN, 40 models were trained and tested, with 20 models being trained with Cityblock distance metric and 20 models being trained with Euclidean distance metric. In both cases the 20 models correspond to 20 different K values in the range 1-N, with N number of samples. This was done in order to plot accuracy-K and $F_1$ score-k curves and thus determine what K value results in the best performing model.
+
+Regarding SVM, 20 models were trained and tested, 5 for each kernel type (linear, poly, sigmoid and RBF). The 5 models for each kernel type correspond to 5 different values for the regularization parameter C, in the range 0.01-100. Once again this was done in order to establish what value for C results in the best performing model.
+
+The neural network was trained and tested with no particular parameters
+
+
 \subsection{Results}
 
-\begin{table}[H]
-\caption{Measured metrics for Naive Bayes}
-\begin{tabular}{cccccc}
-\hline\\ [-1.5ex]
-{Accuracy} & Precision NP & Precision P & Recall NP & Recall P & $F_1$ score \\ \hline\\ [-1.5ex]
-87.52          & 0.854        & 0.901       & 0.912     & 0.837  &0.867  \\ \hline\\ [-1.5ex]
-\end{tabular}
-\end{table}
+\begin{figure*}[ht]
+\centering
+\includegraphics[keepaspectratio,width=0.9\textwidth]{pca_nos}
+\caption[K value vs accuracy and $F_1$ score]{K value vs accuracy (left) and $F_1$ score (right)}
+\label{fig:k}
+\end{figure*}
 
 \section{Conclusions}
 \label{sec:conc}
 
 \printbibliography
 
+\newpage
+\onecolumn
 
+\begin{appendices}
+
+\section{Measured metrics}
+
+\begin{table}[H]
+\caption{Naive Bayes}
+\centering
+\begin{tabular}{cccccc}
+\hline\\ [-1.5ex]
+{Accuracy} & Precision NP & Precision P & Recall NP & Recall P & $F_1$ score \\ \hline\\ [-1.5ex]
+87.52   &     0.854   &    0.901   &  0.912  &  0.837 & 0.868 \\ \hline\\ [-1.5ex]
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\caption{K-nearest neighbors}
+\centering
+\begin{tabular}{cccccccc}
+\hline\\ [-1.5ex]
+metric &    K & Accuracy & Precision NP & Precision P & Recall NP & Recall P & $F_1$ score\\ \hline\\ [-1.5ex]
+ cityblock &     1 &  89.663 &  0.87 &  0.93 & 0.938 & 0.853 &  0.89\\
+ cityblock &     5 &  91.485 & 0.893 &  0.94 & 0.946 & 0.882 &  0.91\\
+ cityblock &    11 &  91.893 & 0.899 & 0.942 & 0.948 & 0.889 & 0.915\\
+ cityblock &    21 &  91.872 &   0.9 &  0.94 & 0.946 &  0.89 & 0.915\\
+ cityblock &    51 &  91.602 & 0.901 & 0.933 & 0.939 & 0.892 & 0.912\\
+ cityblock &    75 &  91.459 & 0.903 & 0.928 & 0.933 & 0.895 & 0.911\\
+ cityblock &   101 &   91.25 & 0.903 & 0.923 & 0.928 & 0.897 & 0.909\\
+ cityblock &   251 &  90.566 & 0.902 & 0.909 & 0.914 & 0.897 & 0.903\\
+ cityblock &   501 &  90.031 & 0.903 & 0.897 & 0.901 & 0.899 & 0.898\\
+ cityblock &  1001 &  89.597 & 0.907 & 0.885 & 0.887 & 0.906 & 0.895\\
+ cityblock &  2501 &  88.939 & 0.918 & 0.863 &  0.86 &  0.92 & 0.891\\
+ cityblock &  5001 &  87.536 & 0.929 & 0.831 & 0.818 & 0.935 &  0.88\\
+ cityblock &  7501 &  85.745 & 0.945 & 0.796 & 0.765 & 0.954 & 0.868\\
+ cityblock & 10001 &  82.883 & 0.959 & 0.753 & 0.694 & 0.969 & 0.847\\
+ cityblock & 15001 &  71.934 &  0.98 & 0.637 & 0.459 &  0.99 & 0.776\\
+ cityblock & 19001 &  57.903 & 0.978 & 0.538 & 0.179 & 0.996 & 0.699\\\hline
+ euclidean &     1 &  73.495 & 0.663 &  0.95 & 0.976 & 0.484 & 0.642\\
+ euclidean &     5 &  72.949 & 0.657 & 0.963 & 0.983 & 0.465 & 0.628\\
+ euclidean &    11 &  72.673 & 0.654 &  0.97 & 0.986 & 0.456 & 0.621\\
+ euclidean &    21 &  72.321 &  0.65 & 0.975 & 0.989 & 0.446 & 0.612\\
+ euclidean &    51 &  71.602 & 0.644 & 0.975 &  0.99 & 0.431 & 0.598\\
+ euclidean &    75 &  71.128 &  0.64 & 0.975 &  0.99 & 0.421 & 0.588\\
+ euclidean &   101 &  70.872 & 0.638 & 0.975 &  0.99 & 0.416 & 0.583\\
+ euclidean &   251 &  69.939 & 0.631 & 0.973 & 0.989 & 0.397 & 0.564\\
+ euclidean &   501 &  69.495 & 0.628 & 0.972 & 0.989 & 0.388 & 0.555\\
+ euclidean &  1001 &  69.128 & 0.625 & 0.968 & 0.988 & 0.382 & 0.548\\
+ euclidean &  2501 &  69.878 & 0.631 & 0.962 & 0.985 & 0.401 & 0.566\\
+ euclidean &  5001 &  73.046 & 0.659 & 0.955 & 0.979 & 0.472 & 0.632\\
+ euclidean &  7501 &  77.439 & 0.703 & 0.943 & 0.967 & 0.574 & 0.714\\
+ euclidean & 10001 &  82.597 & 0.768 & 0.924 & 0.945 & 0.702 & 0.798\\
+ euclidean & 15001 &  85.388 & 0.929 & 0.799 & 0.773 & 0.938 & 0.863\\
+ euclidean & 19001 &  61.026 & 0.982 & 0.557 &  0.24 & 0.995 & 0.714\\ \hline\\ [-1.5ex]
+    \end{tabular}
+\end{table}
+
+\begin{table*}[h]
+\caption{Support Vector Machine}
+\centering
+\begin{tabular}{cccccccc}
+\hline\\ [-1.5ex]
+     kernel &    C & Accuracy & Precision NP & Precision P & Recall NP & Recall P & $F_1$ score\\ \hline\\ [-1.5ex]
+  linear & 0.01 &  91.168 & 0.885 & 0.944 & 0.951 & 0.871 & 0.906\\
+  linear &  0.1 &  90.801 & 0.883 & 0.939 & 0.946 & 0.869 & 0.902\\
+  linear &    1 &  87.673 & 0.852 & 0.907 & 0.918 & 0.834 & 0.869\\
+  linear &   10 &  87.587 & 0.851 & 0.906 & 0.917 & 0.833 & 0.868\\
+  linear &  100 &  87.587 & 0.851 & 0.906 & 0.917 & 0.833 & 0.868\\ \hline
+    poly & 0.01 &  91.923 & 0.895 & 0.948 & 0.954 & 0.884 & 0.915\\
+    poly &  0.1 &  93.878 & 0.911 & 0.973 & 0.976 &   0.9 & 0.935\\
+    poly &    1 &  94.184 & 0.912 & 0.978 & 0.981 & 0.901 & 0.938\\
+    poly &   10 &  94.184 & 0.912 & 0.978 & 0.981 & 0.901 & 0.938\\
+    poly &  100 &  94.184 & 0.912 & 0.978 & 0.981 & 0.901 & 0.938\\ \hline
+ sigmoid & 0.01 &  82.724 &  0.85 & 0.806 & 0.803 & 0.852 & 0.829\\
+ sigmoid &  0.1 &  75.097 & 0.752 &  0.75 & 0.764 & 0.738 & 0.744\\
+ sigmoid &    1 &  68.505 & 0.683 & 0.687 & 0.714 & 0.655 & 0.671\\
+ sigmoid &   10 &  67.551 & 0.672 &  0.68 & 0.711 & 0.639 & 0.659\\
+ sigmoid &  100 &  67.444 & 0.671 & 0.679 & 0.711 & 0.636 & 0.657\\ \hline
+     rbf & 0.01 &  89.908 & 0.883 & 0.917 & 0.925 & 0.872 & 0.894\\
+     rbf &  0.1 &  92.189 & 0.898 &  0.95 & 0.956 & 0.887 & 0.917\\
+     rbf &    1 &  94.036 & 0.911 & 0.976 & 0.978 & 0.901 & 0.937\\
+     rbf &   10 &   94.25 & 0.913 & 0.978 & 0.981 & 0.903 & 0.939\\
+     rbf &  100 &   94.25 & 0.913 & 0.978 & 0.981 & 0.903 & 0.939\\ \hline\\ [-1.5ex]
+    \end{tabular}
+\end{table*}
+
+
+\begin{table}[H]
+\caption{Neural Network}
+\centering
+\begin{tabular}{cccccc}
+\hline\\ [-1.5ex]
+{Accuracy} & Precision NP & Precision P & Recall NP & Recall P & $F_1$ score \\ \hline\\ [-1.5ex]
+86.041    &    0.835   &    0.892  &   0.906  &  0.813 & 0.851 \\ \hline\\ [-1.5ex]
+\end{tabular}
+\end{table}
+
+\end{appendices}
 \end{document}
