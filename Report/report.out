@@ -3,17 +3,20 @@
 \BOOKMARK [1][-]{section.3}{Dataset}{}% 3
 \BOOKMARK [1][-]{section.4}{Methodology}{}% 4
 \BOOKMARK [2][-]{subsection.4.1}{Histogram of Oriented Gradients}{section.4}% 5
-\BOOKMARK [2][-]{subsection.4.2}{Naive Bayes}{section.4}% 6
-\BOOKMARK [2][-]{subsection.4.3}{K-Nearest Neighbors}{section.4}% 7
-\BOOKMARK [2][-]{subsection.4.4}{Support Vector Machines}{section.4}% 8
-\BOOKMARK [2][-]{subsection.4.5}{Neural networks}{section.4}% 9
-\BOOKMARK [2][-]{subsection.4.6}{Hard-negative mining}{section.4}% 10
-\BOOKMARK [2][-]{subsection.4.7}{Pedestrian detection}{section.4}% 11
-\BOOKMARK [2][-]{subsection.4.8}{Non-maximum suppression}{section.4}% 12
-\BOOKMARK [1][-]{section.5}{Implementation}{}% 13
-\BOOKMARK [1][-]{section.6}{Experiments and results}{}% 14
-\BOOKMARK [2][-]{subsection.6.1}{Adopted metrics}{section.6}% 15
-\BOOKMARK [2][-]{subsection.6.2}{Performed experiments}{section.6}% 16
-\BOOKMARK [2][-]{subsection.6.3}{Results}{section.6}% 17
-\BOOKMARK [1][-]{section.7}{Conclusions}{}% 18
-\BOOKMARK [1][-]{section*.3}{Appendix A: Measured metrics}{}% 19
+\BOOKMARK [2][-]{subsection.4.2}{Principal Component Analysis}{section.4}% 6
+\BOOKMARK [2][-]{subsection.4.3}{Naive Bayes}{section.4}% 7
+\BOOKMARK [2][-]{subsection.4.4}{K-Nearest Neighbors}{section.4}% 8
+\BOOKMARK [2][-]{subsection.4.5}{Support Vector Machines}{section.4}% 9
+\BOOKMARK [2][-]{subsection.4.6}{Neural networks}{section.4}% 10
+\BOOKMARK [2][-]{subsection.4.7}{Hard-negative mining}{section.4}% 11
+\BOOKMARK [2][-]{subsection.4.8}{Pedestrian detection}{section.4}% 12
+\BOOKMARK [2][-]{subsection.4.9}{Non-maximum suppression}{section.4}% 13
+\BOOKMARK [1][-]{section.5}{Implementation}{}% 14
+\BOOKMARK [2][-]{subsection.5.1}{Feature extraction}{section.5}% 15
+\BOOKMARK [2][-]{subsection.5.2}{Classification}{section.5}% 16
+\BOOKMARK [2][-]{subsection.5.3}{Detection}{section.5}% 17
+\BOOKMARK [1][-]{section.6}{Experiments and results}{}% 18
+\BOOKMARK [2][-]{subsection.6.1}{Adopted metrics}{section.6}% 19
+\BOOKMARK [2][-]{subsection.6.2}{Performed experiments}{section.6}% 20
+\BOOKMARK [2][-]{subsection.6.3}{Results}{section.6}% 21
+\BOOKMARK [1][-]{section.7}{Conclusions}{}% 22

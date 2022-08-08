@@ -31,10 +31,7 @@
 \maketitle
 \begin{abstract} Pedestrian detection is a key task in the computer vision field, given its obvious applications in surveillance systems, autonomous driving and robotics. 
 This work presents a pipeline for shallow-learning based pedestrian detection. The Histogram of Oriented Gradients (HOG)
-method for feature extraction is described and applied to the Daimler Mono Pedestrian Classification Benchmark Data Set. Four classification
-techniques, Support Vector Machines (SVMs), K-Nearest Neighbors (KNN), Naive Bayes and a shallow neural network, are described and benchmarked
-with different sets of hyperparameters. The benchmarks are then compared against each other to determine the best performing
-method in terms of accuracy in classification. Finally the best performing classifier is showcased by using it in a full pipeline for pedestrian detection applied to a video sequence.
+method for feature extraction is described and applied to the Daimler Mono Pedestrian Classification Benchmark Data Set. Feature dimensionality reduction is performed using Principal Component Analysis (PCA). Four classification techniques, Support Vector Machines (SVMs), K-Nearest Neighbors (KNN), Naive Bayes and a shallow neural network, are described and benchmarked with different sets of hyperparameters. The best performing method of each class is then retrained using hard-negative mining. The benchmarks are then compared against each other to determine the best performing method in terms of accuracy in classification. Finally the best performing classifier is showcased by using it in a full pipeline for pedestrian detection applied to a video sequence.
 \end{abstract}
   \tableofcontents
   \clearpage
@@ -67,8 +64,7 @@ and implemented. Specifically, the Histogram of Oriented
 Gradients (HOG) method will be used to extract features from
 images, because it is known\cite{2} that it is the best performing non-deep learning based feature extractor for human detection. The classification of images will then be implemented
 using non-deep learning methods, namely Support Vector
-Machines (SVMs), K-Nearest Neighbors (KNN), Naive Bayes and a shallow neural network. Finally the best performing classifier will be used
-to implement a pedestrian detector.
+Machines (SVMs), K-Nearest Neighbors (KNN), Naive Bayes and a shallow neural network.
 
 The full details of the implementation can be found on the project's GitHub page\cite{4}.
 
@@ -84,7 +80,7 @@ a pedestrian detection pipeline, which is made up
 of three main components: a feature extractor, a classifier and a
 detector.
 
-Regarding the classifiers, the objective is to obtain an in-depth comparison between the performance of some well-known shallow learning techniques with respect to the problem of pedestrian detection, as well as the relation between hyperparameters and classifier performance.
+Regarding the classifiers, the objective is to obtain a comparison between the performance of some well-known shallow learning techniques with respect to the problem of pedestrian detection, as well as the relation between hyperparameters and classifier performance.
 
 Finally, the best performing classifier will be used to implement a detector, therefore completing the pedestrian detection pipeline. The pipeline will then be applied to a video sequence in order to showcase its performance.
 
@@ -190,6 +186,30 @@ fourteen 1$\times$36 vectors, resulting in a 1$\times$3780 feature vector.
 
 A representation of the resulting feature vector can be seen in figures \ref{fig:3} and \ref{fig:4}. The representation is obtained by plotting the 9$\times$1 normalized histograms in each 8$\times$8 cell. The dominant direction of the histogram is able to capture contours, especially straight lines such as the frame of the window in figure \ref{fig:3} or the legs of the pedestrian in figure \ref{fig:4}. The gradient magnitudes also carry information on the lighting of the scene, with greater magnitudes corresponding to lighter areas.
 
+\subsection{Principal Component Analysis}
+
+Principal Component Analysis (PCA) is a technique used in order to reduce the dimensionality of the feature vectors. It is based on the idea of projecting data from an highly dimensional space to a space with lower dimension, while retaining as much information as possible. Information is encoded by the underlying variance of the data. In other words the data is projected into a space such that the first direction is the direction of maximum variance, the second direction is the direction of second most maximum variance, orthogonal to the first, and so on.
+
+Such directions, which are called principal directions, are encoded by the eigenvectors of the covariance matrix of the data. The eigenvectors corresponding to the directions of maximum variance correspond to the maximum eigenvalues.
+
+The algorithm is as follows. Given a set of feature vectors $x^k$, with $k=1,\dots,M$:
+\begin{itemize}
+\item Center the data around the mean:
+\begin{equation*}
+x_c^k = x^k-\frac{1}{M}\sum\limits_{k=1}^Mx^k
+\end{equation*}
+\item Compute the covariance matrix C of the centered data.
+\item Calculate the eigenvectors and eigenvalues of C.
+\item Sort the eigenvalues from largest to smallest.
+\item The transformation matrix $T$, used to reduce the data into $N$ dimensions, is made up of the first $N$ eigenvectors corresponding to the largest $N$ eigenvalues.
+\item The transformed data is therefore:
+\begin{equation*}
+\omega^k=x_c^k\cdot T
+\end{equation*}
+\end{itemize}
+
+The choice of $N$ is related to the amount of variance of the original data is to be kept. Typically $N$ is chosen such that the variance kept is at least 80\% of the original variance. In this work $N=766$ was chosen in order to keep 90\% of the variance of the original data.
+
 \subsection{Naive Bayes}
 
 Naive Bayes is a class of supervised learning methods based on the "naive" assumption that each pair of features is conditionally independent given the value of the class variable.
@@ -221,15 +241,11 @@ Therefore the following classification rule can be derived:
 \hat y = \underset{y}{argmax}P(y)\prod\limits_{i=1}^nP(x_i\mid y)
 \end{equation*}
 
-$P(y)$ and $P(x_i\mid y)$ are derived via maximum a posteriori estimation.
-
 The different naive Bayes classifier differ only with respect to the chosen shape of the distribution of $P(x_i\mid y)$. In this work only Gaussian Naive Bayes will be considered. The model assumes that the likelihood distribution of the features is Gaussian:
 
 \begin{equation*}
 P(x_i\mid y)=\frac{1}{\sqrt{2\pi\sigma_y^2}}exp\left(-\frac{(x_i-\mu_y)^2}{2\sigma_y^2}\right)
 \end{equation*}
-
-where the mean $\mu_y$ and variance $\sigma_y$ are obtained using maximum likelihood estimation.
 
 \subsection{K-Nearest Neighbors}
 
@@ -269,30 +285,46 @@ For $p=1$ the metric reduces to the so-called Cityblock metric, which is the sum
 
 Support Vector Machines (SVMs) are a class of supervised learning algorithms whose main idea is to find an optimal hyperplane in an $n$-dimensional space, with $n$ number of features, that maximizes the distance, called margin, between the classes of data points. Such an hyperplane constitutes the decision boundary used by a classifier to classify data points, on the basis of which "side" of the hyperplane they fall in. The position and orientation of the hyperplane are influenced by the data points closer to it, which are called support vectors.
 
-If data is not linearly separable in its original space, which is often the case, a transformation to an higher dimensional space is introduced in order to achieve linear separability. This transformation is called kernel
-
+If data is not linearly separable in its original space, which is often the case,a parameter $C$ and slcak variables $\varepsilon_i$ are introduced. The slack variables allow for some support vectors to exceed the margin, and the parameter $C$ sets the cost for a wrong classification. Furthermore, a transformation to an higher dimensional space is introduced in order to achieve linear separability. This transformation is called kernel.
 The main kinds of kernels are:
 \begin{itemize}
-\item Linear 
+\item Linear:
+\begin{equation*}
+K(x,z) = x\cdot z
+\end{equation*}
 \item Polynomial 
-\item Sigmoid
-\item Radial Basis Function (RBF)
+\begin{equation*}
+K(x,z)=(x\cdot z + 1)^p
+\end{equation*}
+\item Sigmoid:
+\begin{equation*}
+K(x,z)=\tanh(ax\cdot z+b)
+\end{equation*}
+\item Radial Basis Function (RBF):
+\begin{equation*}
+K(x,z)=exp\left(-\frac{\norm{x-z}^2}{2\sigma^2}\right)
+\end{equation*}
 \end{itemize}
 
 \subsection{Neural networks}
 
 \subsection{Hard-negative mining}
 
+Hard-negative mining is a technique used to increase the accuracy of object classifiers, by increasing the number of true negatives and decreasing the number of false positives classified by an already trained classifier.
+
+Given an image known not to contain any pedestrians, a Gaussian pyramid is first extracted. That is to say that the image is progressively downsampled, obtaining a set of images at various resolutions. Then a window is slid over each image in the pyramid, and the HOG feature vector is computed. The feature vector is classified by the classifier and, in case the classifier misclassifies the feature vector, the latter is added to the original training set. 
+
+Repeating the process on many additional images will yield a large amount of misclassified feature vectors added to the training set. By retraining the classifier on the expanded training set then its performance should increase.
+
 \subsection{Pedestrian detection}
 
-To detect pedestrian in a given input image, a sliding window approach is used. Firstly, a Gaussian Pyramid is extracted
-from the image. That is to say the image is progressively
-downsampled, obtaining a set of lower resolution versions of the input image at every scale.
+To detect pedestrians in a given input image, a sliding window approach is used. 
 
-Then, a sliding window is passed over each image in the
+Firstly, a Gaussian Pyramid is extracted
+from the image. That is to say the image is progressively
+downsampled, obtaining a set of lower resolution versions of the input image at every scale. Then, a sliding window is passed over each image in the
 pyramid, and a HOG feature vector is computed for each step
-of the sliding.
-Finally, the feature vector is classified by one of the
+of the sliding. Finally, the feature vector is classified by one of the
 previously described classifiers. If the classifier identifies the
 window as a pedestrian, the coordinates of its top left corner
 as well as the confidence score and its properly scaled width
@@ -329,6 +361,12 @@ The list D then contains only the bounding boxes that have the highest confidenc
 \section{Implementation}
 \label{sec:imp}
 
+\subsection{Feature extraction}
+
+\subsection{Classification}
+
+\subsection{Detection}
+
 \section{Experiments and results}
 \label{sec:exp}
 
@@ -353,7 +391,7 @@ Precision is the proportion of predicted positives (or negatives) that actually 
 Recall_P &= \frac{TP}{TP+FN}\\
 Recall_N &= \frac{TN}{TN+FP}
 \end{align*}
-Recall is the proportion of actual positives correctly classified. It is an important metric for pedestrian detection because the pipeline needs to correctly classify as many pedestrians as possible in a given image (hopefully all of them).
+Recall is the proportion of actual positives (or negatives) correctly classified as positive (or negative). It is an important metric for pedestrian detection because the pipeline needs to correctly classify as many pedestrians as possible in a given image (hopefully all of them).
 \item $F_1$ score:
 \begin{equation*}
 F_1=2\frac{Precision_P\times Recall_P}{Precision_P + Recall_P}
@@ -365,126 +403,22 @@ Since its purpose is mostly that of showcasing the best performing classifier, t
 
 \subsection{Performed experiments}
 
-Naive Bayes was trained and tested with no particular parameters.
+Regarding Naive Bayes, 50 models were trained and tested with 50 different values for the smoothing parameter. This was done in order to determine what value of the smoothing parameter produces the best performing model.
 
-Regarding KNN, 40 models were trained and tested, with 20 models being trained with Cityblock distance metric and 20 models being trained with Euclidean distance metric. In both cases the 20 models correspond to 20 different K values in the range 1-N, with N number of samples. This was done in order to plot accuracy-K and $F_1$ score-k curves and thus determine what K value results in the best performing model.
+Regarding KNN, 20 models were trained and tested, with 10 models being trained with Cityblock distance metric and 10 models being trained with Euclidean distance metric. In both cases the 10 models correspond to 10 different K values in the range 1-101, with N number of samples. This was done in order to plot the accuracy-K curve and thus determine what K value results in the best performing model.
 
-Regarding SVM, 20 models were trained and tested, 5 for each kernel type (linear, poly, sigmoid and RBF). The 5 models for each kernel type correspond to 5 different values for the regularization parameter C, in the range 0.01-100. Once again this was done in order to establish what value for C results in the best performing model.
+Regarding SVM, 28 models were trained and tested, 7 for each kernel type (linear, poly, sigmoid and RBF). The 7 models for each kernel type correspond to 7 different values for the regularization parameter C, in the range 0.001-1000. Once again this was done in order to establish what value for C results in the best performing model.
 
-The neural network was trained and tested with no particular parameters
+Regarding the neural network, 24 models were trained and tested. 3 models were trained with a single layer, of sizes $(750,)$, $(500,)$ and $(250,)$ respectively, while 3 models were trained with two layers, of sizes $(750,325)$, $(500,250)$ and $(250,125)$ respectively. In both cases all 3 models were trained with 4 different values in the range 0.0001-0.1 for the regularization parameter $\alpha$. Since shallow neural networks are not typically used to classify HOG features, this was done to obtain an indication of the number of hidden layers, the number of neurons in each layer and the value for $\alpha$ that produce the best model.
 
+To further improve performance, the best classifier of each class was then retrained by applying hard-negative mining.
 
 \subsection{Results}
 
-\begin{figure*}[ht]
-\centering
-\includegraphics[keepaspectratio,width=0.9\textwidth]{pca_nos}
-\caption[K value vs accuracy and $F_1$ score]{K value vs accuracy (left) and $F_1$ score (right)}
-\label{fig:k}
-\end{figure*}
 
 \section{Conclusions}
 \label{sec:conc}
 
 \printbibliography
 
-\newpage
-\onecolumn
-
-\begin{appendices}
-
-\section{Measured metrics}
-
-\begin{table}[H]
-\caption{Naive Bayes}
-\centering
-\begin{tabular}{cccccc}
-\hline\\ [-1.5ex]
-{Accuracy} & Precision NP & Precision P & Recall NP & Recall P & $F_1$ score \\ \hline\\ [-1.5ex]
-87.52   &     0.854   &    0.901   &  0.912  &  0.837 & 0.868 \\ \hline\\ [-1.5ex]
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\caption{K-nearest neighbors}
-\centering
-\begin{tabular}{cccccccc}
-\hline\\ [-1.5ex]
-metric &    K & Accuracy & Precision NP & Precision P & Recall NP & Recall P & $F_1$ score\\ \hline\\ [-1.5ex]
- cityblock &     1 &  89.663 &  0.87 &  0.93 & 0.938 & 0.853 &  0.89\\
- cityblock &     5 &  91.485 & 0.893 &  0.94 & 0.946 & 0.882 &  0.91\\
- cityblock &    11 &  91.893 & 0.899 & 0.942 & 0.948 & 0.889 & 0.915\\
- cityblock &    21 &  91.872 &   0.9 &  0.94 & 0.946 &  0.89 & 0.915\\
- cityblock &    51 &  91.602 & 0.901 & 0.933 & 0.939 & 0.892 & 0.912\\
- cityblock &    75 &  91.459 & 0.903 & 0.928 & 0.933 & 0.895 & 0.911\\
- cityblock &   101 &   91.25 & 0.903 & 0.923 & 0.928 & 0.897 & 0.909\\
- cityblock &   251 &  90.566 & 0.902 & 0.909 & 0.914 & 0.897 & 0.903\\
- cityblock &   501 &  90.031 & 0.903 & 0.897 & 0.901 & 0.899 & 0.898\\
- cityblock &  1001 &  89.597 & 0.907 & 0.885 & 0.887 & 0.906 & 0.895\\
- cityblock &  2501 &  88.939 & 0.918 & 0.863 &  0.86 &  0.92 & 0.891\\
- cityblock &  5001 &  87.536 & 0.929 & 0.831 & 0.818 & 0.935 &  0.88\\
- cityblock &  7501 &  85.745 & 0.945 & 0.796 & 0.765 & 0.954 & 0.868\\
- cityblock & 10001 &  82.883 & 0.959 & 0.753 & 0.694 & 0.969 & 0.847\\
- cityblock & 15001 &  71.934 &  0.98 & 0.637 & 0.459 &  0.99 & 0.776\\
- cityblock & 19001 &  57.903 & 0.978 & 0.538 & 0.179 & 0.996 & 0.699\\\hline
- euclidean &     1 &  73.495 & 0.663 &  0.95 & 0.976 & 0.484 & 0.642\\
- euclidean &     5 &  72.949 & 0.657 & 0.963 & 0.983 & 0.465 & 0.628\\
- euclidean &    11 &  72.673 & 0.654 &  0.97 & 0.986 & 0.456 & 0.621\\
- euclidean &    21 &  72.321 &  0.65 & 0.975 & 0.989 & 0.446 & 0.612\\
- euclidean &    51 &  71.602 & 0.644 & 0.975 &  0.99 & 0.431 & 0.598\\
- euclidean &    75 &  71.128 &  0.64 & 0.975 &  0.99 & 0.421 & 0.588\\
- euclidean &   101 &  70.872 & 0.638 & 0.975 &  0.99 & 0.416 & 0.583\\
- euclidean &   251 &  69.939 & 0.631 & 0.973 & 0.989 & 0.397 & 0.564\\
- euclidean &   501 &  69.495 & 0.628 & 0.972 & 0.989 & 0.388 & 0.555\\
- euclidean &  1001 &  69.128 & 0.625 & 0.968 & 0.988 & 0.382 & 0.548\\
- euclidean &  2501 &  69.878 & 0.631 & 0.962 & 0.985 & 0.401 & 0.566\\
- euclidean &  5001 &  73.046 & 0.659 & 0.955 & 0.979 & 0.472 & 0.632\\
- euclidean &  7501 &  77.439 & 0.703 & 0.943 & 0.967 & 0.574 & 0.714\\
- euclidean & 10001 &  82.597 & 0.768 & 0.924 & 0.945 & 0.702 & 0.798\\
- euclidean & 15001 &  85.388 & 0.929 & 0.799 & 0.773 & 0.938 & 0.863\\
- euclidean & 19001 &  61.026 & 0.982 & 0.557 &  0.24 & 0.995 & 0.714\\ \hline\\ [-1.5ex]
-    \end{tabular}
-\end{table}
-
-\begin{table*}[h]
-\caption{Support Vector Machine}
-\centering
-\begin{tabular}{cccccccc}
-\hline\\ [-1.5ex]
-     kernel &    C & Accuracy & Precision NP & Precision P & Recall NP & Recall P & $F_1$ score\\ \hline\\ [-1.5ex]
-  linear & 0.01 &  91.168 & 0.885 & 0.944 & 0.951 & 0.871 & 0.906\\
-  linear &  0.1 &  90.801 & 0.883 & 0.939 & 0.946 & 0.869 & 0.902\\
-  linear &    1 &  87.673 & 0.852 & 0.907 & 0.918 & 0.834 & 0.869\\
-  linear &   10 &  87.587 & 0.851 & 0.906 & 0.917 & 0.833 & 0.868\\
-  linear &  100 &  87.587 & 0.851 & 0.906 & 0.917 & 0.833 & 0.868\\ \hline
-    poly & 0.01 &  91.923 & 0.895 & 0.948 & 0.954 & 0.884 & 0.915\\
-    poly &  0.1 &  93.878 & 0.911 & 0.973 & 0.976 &   0.9 & 0.935\\
-    poly &    1 &  94.184 & 0.912 & 0.978 & 0.981 & 0.901 & 0.938\\
-    poly &   10 &  94.184 & 0.912 & 0.978 & 0.981 & 0.901 & 0.938\\
-    poly &  100 &  94.184 & 0.912 & 0.978 & 0.981 & 0.901 & 0.938\\ \hline
- sigmoid & 0.01 &  82.724 &  0.85 & 0.806 & 0.803 & 0.852 & 0.829\\
- sigmoid &  0.1 &  75.097 & 0.752 &  0.75 & 0.764 & 0.738 & 0.744\\
- sigmoid &    1 &  68.505 & 0.683 & 0.687 & 0.714 & 0.655 & 0.671\\
- sigmoid &   10 &  67.551 & 0.672 &  0.68 & 0.711 & 0.639 & 0.659\\
- sigmoid &  100 &  67.444 & 0.671 & 0.679 & 0.711 & 0.636 & 0.657\\ \hline
-     rbf & 0.01 &  89.908 & 0.883 & 0.917 & 0.925 & 0.872 & 0.894\\
-     rbf &  0.1 &  92.189 & 0.898 &  0.95 & 0.956 & 0.887 & 0.917\\
-     rbf &    1 &  94.036 & 0.911 & 0.976 & 0.978 & 0.901 & 0.937\\
-     rbf &   10 &   94.25 & 0.913 & 0.978 & 0.981 & 0.903 & 0.939\\
-     rbf &  100 &   94.25 & 0.913 & 0.978 & 0.981 & 0.903 & 0.939\\ \hline\\ [-1.5ex]
-    \end{tabular}
-\end{table*}
-
-
-\begin{table}[H]
-\caption{Neural Network}
-\centering
-\begin{tabular}{cccccc}
-\hline\\ [-1.5ex]
-{Accuracy} & Precision NP & Precision P & Recall NP & Recall P & $F_1$ score \\ \hline\\ [-1.5ex]
-86.041    &    0.835   &    0.892  &   0.906  &  0.813 & 0.851 \\ \hline\\ [-1.5ex]
-\end{tabular}
-\end{table}
-
-\end{appendices}
 \end{document}

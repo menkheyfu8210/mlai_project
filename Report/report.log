@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2021.10.5)  6 AUG 2022 09:56
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2021.10.5)  8 AUG 2022 10:44
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -734,72 +734,58 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 
 
 ]
-<figures/1.png, id=136, 18.0675pt x 36.135pt>
+<figures/1.png, id=154, 18.0675pt x 36.135pt>
 File: figures/1.png Graphic file (type png)
 <use figures/1.png>
-Package pdftex.def Info: figures/1.png  used on input line 99.
+Package pdftex.def Info: figures/1.png  used on input line 95.
 (pdftex.def)             Requested size: 45.359pt x 90.72318pt.
-<figures/2.png, id=137, 18.0675pt x 36.135pt>
+<figures/2.png, id=155, 18.0675pt x 36.135pt>
 File: figures/2.png Graphic file (type png)
 <use figures/2.png>
-Package pdftex.def Info: figures/2.png  used on input line 103.
+Package pdftex.def Info: figures/2.png  used on input line 99.
 (pdftex.def)             Requested size: 45.359pt x 90.72318pt.
  [2
 
 
  <./figures/1.png> <./figures/2.png>]
 LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 1
-63.
+59.
  (/usr/share/texlive/texmf-dist/tex/latex/psnfss/ts1ptm.fd
 File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
 )
-<figures/3.png, id=157, 411.5375pt x 247.92625pt>
+<figures/3.png, id=175, 411.5375pt x 247.92625pt>
 File: figures/3.png Graphic file (type png)
 <use figures/3.png>
-Package pdftex.def Info: figures/3.png  used on input line 180.
+Package pdftex.def Info: figures/3.png  used on input line 176.
 (pdftex.def)             Requested size: 226.79846pt x 136.63223pt.
-<figures/4.png, id=159, 411.5375pt x 247.92625pt>
+<figures/4.png, id=177, 411.5375pt x 247.92625pt>
 File: figures/4.png Graphic file (type png)
 <use figures/4.png>
-Package pdftex.def Info: figures/4.png  used on input line 186.
+Package pdftex.def Info: figures/4.png  used on input line 182.
 (pdftex.def)             Requested size: 226.79846pt x 136.63223pt.
 
-[3 <./figures/3.png> <./figures/4.png>] [4]
-<figures/pca_nos.png, id=180, 841.9455pt x 312.9291pt>
-File: figures/pca_nos.png Graphic file (type png)
-<use figures/pca_nos.png>
-Package pdftex.def Info: figures/pca_nos.png  used on input line 381.
-(pdftex.def)             Requested size: 464.39685pt x 172.60333pt.
- [5] [6 <./figures/pca_nos.png>]
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
- [7
+[3 <./figures/3.png> <./figures/4.png>] [4] [5]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 424.
+ [6
 
 ]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 490.
-
-[8]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 490.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 424.
  (./report.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 490.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 490.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 424.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 424.
 Package rerunfilecheck Info: File `report.out' has not changed.
-(rerunfilecheck)             Checksum: B4048157C075874F38CF6A9D6A5388E7;1151.
+(rerunfilecheck)             Checksum: 9D678E67C535422CE49209CC049D2D98;1355.
 Package logreq Info: Writing requests to 'report.run.xml'.
 \openout1 = `report.run.xml'.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 490.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 424.
  ) 
 Here is how much of TeX's memory you used:
- 15800 strings out of 481239
- 269434 string characters out of 5920377
- 756234 words of memory out of 5000000
- 30793 multiletter control sequences out of 15000+600000
- 655095 words of font info for 155 fonts, out of 8000000 for 9000
+ 15771 strings out of 481239
+ 269118 string characters out of 5920377
+ 743180 words of memory out of 5000000
+ 30774 multiletter control sequences out of 15000+600000
+ 647691 words of font info for 144 fonts, out of 8000000 for 9000
  1144 hyphenation exceptions out of 8191
  43i,8n,45p,921b,1313s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/texliv
@@ -807,20 +793,18 @@ e/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist
 /fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/share/texlive/texmf-dist/fonts/
 type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/fonts/type1/p
-ublic/amsfonts/cm/cmmi8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
-msfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmr5.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6
-.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></u
-sr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/sha
-re/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texl
-ive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/share/texli
-ve/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf-dist/f
-onts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/
-times/utmri8a.pfb>
-Output written on report.pdf (8 pages, 309963 bytes).
+ublic/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmr5.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/
+cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy1
+0.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><
+/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></
+usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texli
+ve/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/f
+onts/type1/urw/times/utmri8a.pfb>
+Output written on report.pdf (6 pages, 256894 bytes).
 PDF statistics:
- 273 PDF objects out of 1000 (max. 8388607)
- 237 compressed objects within 3 object streams
- 45 named destinations out of 1000 (max. 500000)
- 178 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 263 PDF objects out of 1000 (max. 8388607)
+ 233 compressed objects within 3 object streams
+ 39 named destinations out of 1000 (max. 500000)
+ 197 words of extra memory for PDF output out of 10000 (max. 10000000)
 

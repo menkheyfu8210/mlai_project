@@ -10,30 +10,36 @@
 \defcounter {refsection}{0}\relax 
 \contentsline {subsection}{\numberline {\mbox {IV-A}}Histogram of Oriented Gradients}{2}{subsection.4.1}%
 \defcounter {refsection}{0}\relax 
-\contentsline {subsection}{\numberline {\mbox {IV-B}}Naive Bayes}{3}{subsection.4.2}%
+\contentsline {subsection}{\numberline {\mbox {IV-B}}Principal Component Analysis}{3}{subsection.4.2}%
 \defcounter {refsection}{0}\relax 
-\contentsline {subsection}{\numberline {\mbox {IV-C}}K-Nearest Neighbors}{4}{subsection.4.3}%
+\contentsline {subsection}{\numberline {\mbox {IV-C}}Naive Bayes}{3}{subsection.4.3}%
 \defcounter {refsection}{0}\relax 
-\contentsline {subsection}{\numberline {\mbox {IV-D}}Support Vector Machines}{4}{subsection.4.4}%
+\contentsline {subsection}{\numberline {\mbox {IV-D}}K-Nearest Neighbors}{4}{subsection.4.4}%
 \defcounter {refsection}{0}\relax 
-\contentsline {subsection}{\numberline {\mbox {IV-E}}Neural networks}{4}{subsection.4.5}%
+\contentsline {subsection}{\numberline {\mbox {IV-E}}Support Vector Machines}{4}{subsection.4.5}%
 \defcounter {refsection}{0}\relax 
-\contentsline {subsection}{\numberline {\mbox {IV-F}}Hard-negative mining}{4}{subsection.4.6}%
+\contentsline {subsection}{\numberline {\mbox {IV-F}}Neural networks}{4}{subsection.4.6}%
 \defcounter {refsection}{0}\relax 
-\contentsline {subsection}{\numberline {\mbox {IV-G}}Pedestrian detection}{4}{subsection.4.7}%
+\contentsline {subsection}{\numberline {\mbox {IV-G}}Hard-negative mining}{4}{subsection.4.7}%
 \defcounter {refsection}{0}\relax 
-\contentsline {subsection}{\numberline {\mbox {IV-H}}Non-maximum suppression}{4}{subsection.4.8}%
+\contentsline {subsection}{\numberline {\mbox {IV-H}}Pedestrian detection}{5}{subsection.4.8}%
 \defcounter {refsection}{0}\relax 
-\contentsline {section}{\numberline {V}Implementation}{4}{section.5}%
+\contentsline {subsection}{\numberline {\mbox {IV-I}}Non-maximum suppression}{5}{subsection.4.9}%
 \defcounter {refsection}{0}\relax 
-\contentsline {section}{\numberline {VI}Experiments and results}{4}{section.6}%
+\contentsline {section}{\numberline {V}Implementation}{5}{section.5}%
 \defcounter {refsection}{0}\relax 
-\contentsline {subsection}{\numberline {\mbox {VI-A}}Adopted metrics}{4}{subsection.6.1}%
+\contentsline {subsection}{\numberline {\mbox {V-A}}Feature extraction}{5}{subsection.5.1}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {\mbox {V-B}}Classification}{5}{subsection.5.2}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {\mbox {V-C}}Detection}{5}{subsection.5.3}%
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {VI}Experiments and results}{5}{section.6}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {\mbox {VI-A}}Adopted metrics}{5}{subsection.6.1}%
 \defcounter {refsection}{0}\relax 
 \contentsline {subsection}{\numberline {\mbox {VI-B}}Performed experiments}{5}{subsection.6.2}%
 \defcounter {refsection}{0}\relax 
-\contentsline {subsection}{\numberline {\mbox {VI-C}}Results}{5}{subsection.6.3}%
+\contentsline {subsection}{\numberline {\mbox {VI-C}}Results}{6}{subsection.6.3}%
 \defcounter {refsection}{0}\relax 
-\contentsline {section}{\numberline {VII}Conclusions}{5}{section.7}%
-\defcounter {refsection}{0}\relax 
-\contentsline {section}{Appendix\nobreakspace A: Measured metrics}{7}{section*.3}%
+\contentsline {section}{\numberline {VII}Conclusions}{6}{section.7}%

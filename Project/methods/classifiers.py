@@ -2,12 +2,13 @@ import joblib
 import numpy as np
 import os
 
-from math import nan
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import classification_report
+from sklearn.model_selection import GridSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
+from tqdm import tqdm
 
 class Classifier():
 	"""Parent class for all classifier models. All children differ only in the
@@ -15,18 +16,14 @@ class Classifier():
 
     Parameters
     ----------
+	parameter_space : dict, default={}
+		Dictionary containing the parameter space for hyperparameter tuning.
+
     model_path : str, default='./models/'
         Path where the model is stored.
 
     model_name : str, default='unnamed'
         Specifies the model's name for debug purposes.
-
-    string : str, default='unnamed'
-        Model-specific string (e.g. kernel type for SVM, distance metric for \
-		KNN, etc.)
-
-    parameter : float, default=nan
-        Model-specific parameter (e.g. C for SVM, K for KNN, etc.)
 
     Attributes
     ----------
@@ -48,26 +45,29 @@ class Classifier():
     """
 
 	def __init__(self, 
+				estimator=None,
+				parameter_space={},
 				model_path='./Project/models/', 
-				model_name='unnamed', 
-				string='', 
-				parameter=nan) -> None:
+				model_name='unnamed') -> None:
+		self.estimator = estimator
+		self.parameter_space = parameter_space
 		self.model_name = model_name
 		self.model_path = model_path
 		if not os.path.exists(model_path):
 			os.makedirs(model_path)
-		self.string = string
-		self.parameter = parameter
+		self.trained = os.path.exists(self.model_path + self.model_name)
+		self.retrained = os.path.exists(self.model_path + 'retrained_' + self.model_name)
 		self.loaded = False
 
-	def load(self):
+	def load(self, model_path, model_name):
 		"""Load a pretrained model.
         """
-		if os.path.exists(self.model_path + self.model_name):
-			self.model = joblib.load(self.model_path + self.model_name)
+		if self.trained:
+			self.model = joblib.load(model_path + model_name)
 			self.loaded = True
+			return self.model
 		else: 
-			raise FileNotFoundError(self.model_path + self.model_name + ': file not found.')  
+			raise FileNotFoundError(model_path + model_name + ': file not found.')  
 
 	def train(self, train_features, train_labels):
 		"""Train the model on the given training data.
@@ -81,14 +81,46 @@ class Classifier():
         train_labels : array-like of shape (n_samples,)
             Class labels associated to the training features.
         """
-		if not os.path.exists(self.model_path + self.model_name):
+		if not self.trained:
 			# Train the model on the provided data
 			trained_model = self.model.fit(train_features, train_labels)
 			# Save the model for future use
 			joblib.dump(trained_model, self.model_path + self.model_name)
 		else:
-			self.load()
+			self.load(self.model_path, self.model_name)
+		self.trained = True
 
+	def retrain(self, train_features, train_labels, add_features):
+		"""Rerain the model after performing hard-negative mining.
+
+        Parameters
+        ----------
+        train_features : array-like of shape (n_samples, n_features)
+            Training features, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        train_labels : array-like of shape (n_samples,)
+            Class labels associated to the training features.
+
+        add_features : array-like of shape (n_samples, n_features)
+            Additional features, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+        """
+		if not self.loaded:
+			self.load()
+		# Perform hard-negative mining
+		pbar = tqdm(add_features)
+		for feature in pbar:
+			pbar.set_description('Performing hard negative mining with ' + self.model_name)
+			# If the model misclassifies, add that feature vector to the training vector
+			if self.model.predict(feature) == 1:
+				train_features.append(feature)
+				train_labels.append(0)
+		# Retrain
+		retrained_model = self.model.fit(train_features, train_labels)
+		# Save the model for future use
+		joblib.dump(retrained_model, self.model_path + 'retrained_' + self.model_name)
+		
 	def predict(self, test_features):
 		"""Make a prediction on testing data.
 
@@ -103,12 +135,12 @@ class Classifier():
 		array-like of shape (n_samples,) holding the prediction for each testing
 		feature.
         """
-		if os.path.exists(self.model_path + self.model_name):
+		if self.trained:
 			return self.model.predict(test_features)
 		else: 
 			raise RuntimeError('Model not trained.')  
 
-	def validate(self, prediction, test_labels, disp=False):
+	def validate(self, prediction, test_labels):
 		"""Validate the prediction of the model against the known testing data's
 		class labels.
 		
@@ -122,140 +154,36 @@ class Classifier():
 
 		Returns
 		-------
-		numpy array of shape (1, 7) holding:
-
-		- str, Model-specific (e.g. kernel type for SVM, distance metric for KNN)
-		- float, Model-specific (e.g. C for SVM, K for KNN, etc.)
-		- float, accuracy
-		- float, precision w.r.t. class 0
-		- float, precision w.r.t. class 1
-		- float, recall w.r.t. class 0
-		- float, recall w.r.t. class 1
+		dict containing a summary of the precision, recall, F1 score for each class
         """
-		if not self.loaded:
-			self.load()
-		accuracy = round(accuracy_score(test_labels, prediction) * 100, 3)
-		precision_np = round(precision_score(test_labels, prediction, pos_label=0), 3)
-		precision_p = round(precision_score(test_labels, prediction, pos_label=1), 3)
-		recall_np = round(recall_score(test_labels, prediction, pos_label=0), 3)
-		recall_p = round(recall_score(test_labels, prediction, pos_label=1), 3)
-		f1 = round(f1_score(test_labels, prediction), 3)
-		cfs = confusion_matrix(test_labels, prediction)
-		ret = np.array([self.string, self.parameter, accuracy, precision_np, precision_p, recall_np, recall_p, f1]).T
-		if disp:
-			print("Model: " + self.model_name)
-			print(f"Classifier accuracy: {(accuracy)}%")
-			print(f"Precision w.r.t class non-pedestrian: {precision_np}")
-			print(f"Precision w.r.t class pedestrian: {precision_p}")
-			print(f"Recall w.r.t class non-pedestrian: {recall_np}")
-			print(f"Recall w.r.t class pedestrian: {recall_p}")
-			print(f"F1 score w.r.t class pedestrian: {f1}")
-			print('Confusion matrix:\n')
-			print(cfs)
-		return ret
+		print('Validation results:')
+		print(classification_report(test_labels, prediction, target_names=['Non-pedestrian', 'Pedestrian']))
 	
-class SVM(Classifier):
-	"""Support Vector Machine based classification. This is a wrapper class around
-	sklearn's SVC class.
+	def hyperparameter_tuning(self, train_features, train_labels):
+		"""Perform a grid search with cross validation on the parameter space in
+		order to determine the optimal hyperparameter set.
+		
+        Parameters
+        ----------
+        train_features : array-like of shape (n_samples, n_features)
+            Training features, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
-    Parameters
-    ----------
-    C : float, default=1.0
-        Regularization parameter. The strength of the regularization is
-        inversely proportional to C. Must be strictly positive. The penalty
-        is a squared l2 penalty.
-
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid'}, default='rbf'
-        Specifies the kernel type to be used in the algorithm.
-
-    max_iter : int, default=1000
-        Hard limit on iterations within solver. -1 for no limit.
-
-    model_path : str, default='./models/svm/'
-        Specifies where to save and look for trained models.
-
-	pretrained : bool, default=True
-		Specifies whether or not the SVM was already trained.
-
-    Attributes
-    ----------		
-	model : object
-		Instance of sklearn.svm.SVC
-    """
-
-	def __init__(self, 
-			 	C=1.0, 
-				kernel='rbf', 
-				max_iter=10000,
-				model_path='./Project/models/svm/', 
-				pretrained=False) -> None:
-		# Input arguments checks
-		kernels = ['linear', 'poly', 'rbf', 'sigmoid']
-		if C <= 0: 
-			raise ValueError('C value must be strictly positive.')
-		if max_iter <= 0:  
-			max_iter = -1
-		if kernel not in kernels:
-			raise ValueError('Kernel type not recognized. Possible options are: ' +
-				'"linear", "poly", "rbf", "sigmoid".')
-		model_name = kernel + 'C' + str(C).replace('.','') + '.mod'
-		super().__init__(model_path, model_name, kernel, C)
-		if pretrained: 
-			super().load()
-		else:
-			# Initialize the model
-			self.model = SVC(C=C, kernel=kernel, max_iter=max_iter)
-
-class KNN(Classifier):
-	"""K-Nearest Neighbors based classification. This is a wrapper class around
-	sklearn's KNeighborsClassifier class.
-
-    Parameters
-    ----------
-    K : int,
-        Number of neighbors to be considered in classification.
-
-    metric : {'cityblock', 'euclidean', 'minkowski'}, default='euclidean'
-        Specifies the distance metric to be used in the algorithm.
-
-    model_path : str, default='./models/knn/'
-        Specifies where to save and look for trained models.
-
-	pretrained : bool, default=True
-		Specifies whether or not the model was already trained.
-
-    Attributes
-    ----------		
-	model : object
-		Instance of sklearn.neighbors.KNeighborsClassifier
-    """
-
-	def __init__(self, 
-				K, 
-				metric='euclidean', 
-				model_path='./Project/models/knn/', 
-				pretrained=False) -> None:
-		# Input arguments checks
-		metrics = ['cityblock', 'euclidean', 'minkowski']
-		if metric not in metrics:
-			raise ValueError('Metric not recognized. Possible options are: ' +
-				'"cityblock, "euclidean", "minkowski"')
-		if K <= 0:
-			raise ValueError('K value must be strictly positive.')
-		p_dict = {
-			'cityblock' : 1, 
-			'euclidean' : 2, 
-			'minkowski' : 3
-		}
-		model_name = metric + 'K' + str(K) + '.mod'
-		super().__init__(model_path, model_name, metric, K)
-		if pretrained: 
-			super().load()
-		else:
-			# Initialize the model
-			self.model = KNeighborsClassifier(n_neighbors=K, 
-											p=p_dict[metric], 
-											metric=metric)
+        train_labels : array-like of shape (n_samples,)
+            Class labels associated to the training features.
+        """
+		print('Starting hyperparameter tuning for ' +  self.model_name)
+		clf = GridSearchCV(self.model, self.parameter_space, cv=3, verbose=10)
+		clf.fit(train_features, train_labels)
+		# Best parameter set
+		print('Best parameters found:\n', clf.best_params_)
+		# All results
+		print('Results for all runs:')
+		means = clf.cv_results_['mean_test_score']
+		stds = clf.cv_results_['std_test_score']
+		for mean, std, params in zip(means, stds, clf.cv_results_['params']):
+			print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
+		self.model = clf.best_estimator_
 
 class NaiveBayes(Classifier):
 	"""Naive Bayes based classification. This is a wrapper class around
@@ -263,11 +191,11 @@ class NaiveBayes(Classifier):
 
     Parameters
     ----------
+	retrained : bool, default=False
+		Specifies whether or not to load the retrained model
+
     model_path : str, default='./models/naive_bayes/'
         Specifies where to save and look for trained models.
-
-	pretrained : bool, default=True
-		Specifies whether or not the model was already trained.
 
     Attributes
     ----------
@@ -275,29 +203,112 @@ class NaiveBayes(Classifier):
 		Instance of sklearn.naive_bayes.GaussianNB
     """
 
-	def __init__(self,  
-				model_path='./Project/models/naive_bayes/', 
-				pretrained=False) -> None:
-		model_name = 'NaiveBayes.mod'
-		if pretrained: 
-			super().load(model_path, model_name, nan, '')
+	def __init__(self, retrained=False, model_path='./Project/models/naive_bayes/') -> None:
+		print(f"Initializing NaiveBayes")
+		self.model_path = model_path
+		if retrained:
+			self.model_name = 'retrained_NaiveBayes.mod'
+		else:
+			self.model_name = 'NaiveBayes.mod'
+		self.trained = os.path.exists(model_path + self.model_name)
+		if self.trained: 
+			self.model = super().load(self.model_path, self.model_name)
 		else:
 			# Initialize the model
-			print(f"Initializing NaiveBayes")
 			self.model = GaussianNB()
-		super().__init__(model_path, model_name, '', nan)
-		
+		# Set up the space for hyperparameter tuning
+		parameter_space = {
+			'var_smoothing': np.logspace(0,-9, num=50)
+		}
+		super().__init__(self.model, parameter_space, model_path, self.model_name)
+
+class KNN(Classifier):
+	"""K-Nearest Neighbors based classification. This is a wrapper class around
+	sklearn's KNeighborsClassifier class.
+
+    Parameters
+    ----------
+	retrained : bool, default=False
+		Specifies whether or not to load the retrained model
+
+    model_path : str, default='./models/knn/'
+        Specifies where to save and look for trained models.
+
+    Attributes
+    ----------		
+	model : object
+		Instance of sklearn.neighbors.KNeighborsClassifier
+    """
+
+	def __init__(self, retrained=False, model_path='./Project/models/knn/') -> None:
+		print(f"Initializing KNN")
+		self.model_path = model_path
+		if retrained:
+			self.model_name = 'retrained_KNearestNeighbors.mod'
+		else:
+			self.model_name = 'KNearestNeighbors.mod'
+		self.trained = os.path.exists(model_path + self.model_name)
+		if self.trained: 
+			self.model = super().load(self.model_path, self.model_name)
+		else:
+			# Initialize the model
+			self.model = KNeighborsClassifier()	
+		# Set up the space for hyperparameter tuning
+		parameter_space = {
+			'n_neighbors' : [1, 3, 5, 7, 9, 11, 25, 51, 75, 101],
+			'p' : [1, 2]
+		}
+		super().__init__(self.model, parameter_space, model_path, self.model_name)	
+
+class SVM(Classifier):
+	"""Support Vector Machine based classification. This is a wrapper class around
+	sklearn's SVC class.
+
+    Parameters
+    ----------
+	retrained : bool, default=False
+		Specifies whether or not to load the retrained model
+
+    model_path : str, default='./models/svm/'
+        Specifies where to save and look for trained models.
+
+    Attributes
+    ----------		
+	model : object
+		Instance of sklearn.svm.SVC
+    """
+
+	def __init__(self, retrained=False, model_path='./Project/models/svm/', ) -> None:
+		print(f"Initializing SVM")
+		self.model_path = model_path
+		if retrained:
+			self.model_name = 'retrained_SupportVectorMachine.mod'
+		else:
+			self.model_name = 'SupportVectorMachine.mod'
+		self.trained = os.path.exists(model_path + self.model_name)
+		if self.trained: 
+			self.model = super().load(self.model_path, self.model_name)
+		else:
+			# Initialize the model
+			self.model = SVC()
+		# Set up the space for hyperparameter tuning
+		parameter_space = {
+			'C' : [0.001, 0.01, 0.1, 1, 10, 100, 1000],
+			'kernel' : ['linear', 'poly', 'sigmoid', 'rbf']
+		}
+		super().__init__(self.model, parameter_space, model_path, self.model_name)	
+
 class NeuralNetwork(Classifier):
 	"""Neural network based classification. This is a wrapper class around
 	sklearn's MLPClassifier class.
 
     Parameters
     ----------
+	retrained : bool, default=False
+		Specifies whether or not to load the retrained model
+
     model_path : str, default='./models/neural_network/'
         Specifies where to save and look for trained models.
-
-	pretrained : bool, default=True
-		Specifies whether or not the model was already trained.
 
     Attributes
     ----------
@@ -305,16 +316,23 @@ class NeuralNetwork(Classifier):
 		Instance of sklearn.neural_network.MLPClassifier
     """
 
-	def __init__(self,  
-				model_path='./Project/models/neural_network/', 
-				pretrained=False) -> None:
-		first_hidden_layer_size = 420
-		second_hidden_layer_size = 140
-		model_name = 'H' + str(first_hidden_layer_size) + 'H' + str(second_hidden_layer_size) + 'NN.mod'
-		if pretrained: 
-			super().load(model_path, model_name, nan, '')
+	def __init__(self, retrained=False, model_path='./Project/models/neural_network/') -> None:
+		print(f"Initializing NeuralNetwork")
+		self.model_path = model_path
+		if retrained:
+			self.model_name = 'retrained_NeuralNetwork.mod'
+		else:
+			self.model_name = 'NeuralNetwork.mod'
+		self.trained = os.path.exists(model_path + self.model_name)
+		if self.trained: 
+			self.model = super().load(self.model_path, self.model_name)
 		else:
 			# Initialize the model
-			print(f"Initializing NeuralNetwork")
-			self.model = MLPClassifier(hidden_layer_sizes=(first_hidden_layer_size, second_hidden_layer_size), random_state=1)
-		super().__init__(model_path, model_name, '', nan)
+			self.model = MLPClassifier()
+		# Set up the space for hyperparameter tuning
+		parameter_space = {
+			'alpha' : [0.0001, 0.001, 0.01, 0.1],
+			'hidden_layer_sizes' : [(750,), (500,), (250,), (750, 325), (500, 250), (250, 125),]
+
+		}
+		super().__init__(self.model, parameter_space, model_path, self.model_name)	

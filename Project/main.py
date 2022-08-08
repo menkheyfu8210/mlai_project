@@ -1,26 +1,24 @@
-import joblib
 import numpy as np
-import pandas as pd
 import warnings 
 warnings.filterwarnings("ignore")
 
-from methods.classifiers import SVM, KNN, NaiveBayes, NeuralNetwork
+from methods.classifiers import KNN, NaiveBayes, NeuralNetwork, SVM
 from methods.feature_extractor import FeatureExtractor
-from tqdm import tqdm
+from sklearn.neighbors import KNeighborsClassifier
+import joblib
 
 def main(args = None):
 
     ############
     # SETTINGS #
     ############
-    useNB = False
-    preTrainedNB = True
-    useKNN = False
-    preTrainedKNNs = True
-    useSVMs = False
-    preTrainedSVMs = True
+    useNB = True
+    useKNN = True
+    useSVM = True
     useNN = True
-    preTrainedNN = False
+    doHardNegativeMining = True
+    # To keep consistency between runs
+    np.random.seed(0)
 
     ##################################
     # FEATURE EXTRACTION AND LOADING #
@@ -28,109 +26,107 @@ def main(args = None):
     fe = FeatureExtractor()
     (trainFeatures, trainLabels) = fe.extract_training_features()
     (testFeatures, testLabels) = fe.extract_testing_features()
-    
+
     #################################
     # CLASSIFICATION W/ NAIVE BAYES #
     #################################
     if useNB:
-        results = []
-        nb = NaiveBayes(pretrained=preTrainedNB)
-        if not preTrainedNB:
+        nb = NaiveBayes()
+        if not nb.trained:
+            # Determine the best parameter set for the classifier
+            nb.hyperparameter_tuning(trainFeatures, trainLabels)
+            # Train the best model
             nb.train(trainFeatures, trainLabels)
-        results.extend(nb.validate(nb.predict(testFeatures), testLabels))
-        results = np.reshape(np.array(results), (1, 8))
-        df = pd.DataFrame(results, columns = ['-','-','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p', 'f1'])
-        joblib.dump(df, './Project/validation_results/nb_testing_results.res')
-        print('Naive Bayes testing results:')
-        print(df)
+        # Validate the model against the test features
+        nb.validate(nb.predict(testFeatures), testLabels)
 
     #########################
     # CLASSIFICATION W/ KNN #
     #########################
     if useKNN:
-        # Initialize a bunch of KNN classifiers with varying K values and distance metrics
-        pbar = tqdm([1, 5, 11, 21, 51, 75, 101, 251, 501, 1001, 2501, 5001, 7501, 10001, 15001, 19001])
-        results = []
-        for k in pbar:
-            knn = KNN(k, 'cityblock', pretrained=preTrainedKNNs)
-            if not preTrainedKNNs:
-                pbar.set_description('Training Cityblock KNN w/ K=' + str(k))
-                knn.train(trainFeatures, trainLabels)
-            pbar.set_description('Testing Cityblock KNN w/ K=' + str(k))
-            results.extend(knn.validate(knn.predict(testFeatures), testLabels))
-        pbar = tqdm([1, 5, 11, 21, 51, 75, 101, 251, 501, 1001, 2501, 5001, 7501, 10001, 15001, 19001])
-        for k in pbar:
-            knn = KNN(k, 'euclidean', pretrained=preTrainedKNNs)
-            if not preTrainedKNNs:
-                pbar.set_description('Training Euclidean KNN w/ K=' + str(k))
-                knn.train(trainFeatures, trainLabels)
-            pbar.set_description('Testing Euclidean KNN w/ K=' + str(k))
-            results.extend(knn.validate(knn.predict(testFeatures), testLabels))
-        results = np.reshape(np.array(results), (32, 8))
-        df = pd.DataFrame(results, columns = ['metric','K','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p', 'f1'])
-        joblib.dump(df, './Project/validation_results/knn_testing_results.res')
-        print('KNN testing results:')
-        print(df)
-        
+        knn = KNN()
+        if not knn.trained:
+            # Determine the best parameter set for the classifier
+            knn.hyperparameter_tuning(trainFeatures, trainLabels)
+            # Train the best model
+            knn.train(trainFeatures, trainLabels)
+        # Validate the model against the test features
+        knn.validate(knn.predict(testFeatures), testLabels)
+
     #########################
     # CLASSIFICATION W/ SVM #
     #########################
-    # Train (or load) a bunch of SVMs with different kernels and varying 
-    # regularization params, then validate each one
-    if useSVMs:
-        pbar = tqdm([0.01, 0.1, 1, 10, 100])
-        results = []
-        for c in pbar:
-            svm = SVM(C=c, kernel='linear', pretrained=preTrainedSVMs)
-            if not preTrainedSVMs:
-                pbar.set_description('Training Linear SVM w/ C=' + str(c))
-                svm.train(trainFeatures, trainLabels)
-            pbar.set_description('Testing Linear SVM w/ C=' + str(c))
-            results.extend(svm.validate(svm.predict(testFeatures), testLabels))
-        pbar = tqdm([0.01, 0.1, 1, 10, 100])
-        for c in pbar:
-            svm = SVM(C=c, kernel='poly', pretrained=preTrainedSVMs)
-            if not preTrainedSVMs:
-                pbar.set_description('Training Poly SVM w/ C=' + str(c))
-                svm.train(trainFeatures, trainLabels)
-            pbar.set_description('Testing Poly SVM w/ C=' + str(c))
-            results.extend(svm.validate(svm.predict(testFeatures), testLabels))
-        pbar = tqdm([0.01, 0.1, 1, 10, 100])
-        for c in pbar:
-            svm = SVM(C=c, kernel='sigmoid', pretrained=preTrainedSVMs)
-            if not preTrainedSVMs:
-                pbar.set_description('Training Sigmoid SVM w/ C=' + str(c))
-                svm.train(trainFeatures, trainLabels)
-            pbar.set_description('Testing Sigmoid SVM w/ C=' + str(c))
-            results.extend(svm.validate(svm.predict(testFeatures), testLabels))
-        pbar = tqdm([0.01, 0.1, 1, 10, 100])
-        for c in pbar:
-            svm = SVM(C=c, kernel='rbf', pretrained=preTrainedSVMs)
-            if not preTrainedSVMs:
-                pbar.set_description('Training RBF SVM w/ C=' + str(c))
-                svm.train(trainFeatures, trainLabels)
-            pbar.set_description('Testing RBF SVM w/ C=' + str(c))
-            results.extend(svm.validate(svm.predict(testFeatures), testLabels))
-        results = np.reshape(np.array(results), (20, 8))
-        df = pd.DataFrame(results, columns = ['kernel','C','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p', 'f1'])
-        joblib.dump(df, './Project/validation_results/svm_testing_results.res')
-        print(df)
+    if useSVM:
+        svm = SVM()
+        if not svm.trained:
+            # Determine the best parameter set for the classifier
+            svm.hyperparameter_tuning(trainFeatures, trainLabels)
+            # Train the best model
+            svm.train(trainFeatures, trainLabels)
+        # Validate the model against the test features
+        svm.validate(svm.predict(testFeatures), testLabels)
 
     ####################################
     # CLASSIFICATION W/ NEURAL NETWORK #
     ####################################
     if useNN:
-        results = []
-        nb = NeuralNetwork(pretrained=preTrainedNN)
-        if not preTrainedNN:
-            nb.train(trainFeatures, trainLabels)
-        results.extend(nb.validate(nb.predict(testFeatures), testLabels))
-        results = np.reshape(np.array(results), (1, 8))
-        df = pd.DataFrame(results, columns = ['-','-','accuracy', 'precision_np', 'precision_p', 'recall_np', 'recall_p', 'f1'])
-        joblib.dump(df, './Project/validation_results/nn_testing_results.res')
-        print('Neural Network testing results:')
-        print(df)
-    
+        nn = NeuralNetwork()
+        if not nn.trained:
+            # Determine the best parameter set for the classifier
+            nn.hyperparameter_tuning(trainFeatures, trainLabels)
+            # Train the best model
+            nn.train(trainFeatures, trainLabels)
+        # Validate the model against the test features
+        nn.validate(nn.predict(testFeatures), testLabels)
+
+    ######################################
+    # RETRAINING W/ HARD-NEGATIVE MINING #
+    ######################################
+    if doHardNegativeMining:
+        print('Starting retraining with hard-negative mining.')
+        # Extract the additional features if they haven't been already
+        if not fe.preExtractedAddFeat:
+            fe.extract_add_features
+        # Load the additional features
+        addFeatures = fe.load_add_features()
+        # NaiveBayes
+        nb = NaiveBayes()
+        if nb.trained:
+            if not nb.retrained:
+                nb.retrain(trainFeatures, trainLabels, addFeatures)
+            # Validate the model against the test features
+            nb.validate(nb.predict(testFeatures), testLabels)
+        else:
+            print(nb.model_name + ' was not trained, skipping.')
+        # KNN
+        knn = KNN()
+        if nb.trained:
+            if not knn.retrained:
+                knn.retrain(trainFeatures, trainLabels, addFeatures)
+                # Validate the model against the test features
+            knn.validate(knn.predict(testFeatures), testLabels)
+        else:
+            print(knn.model_name + ' was not trained, skipping.')
+        # SVM
+        svm = SVM()
+        if svm.trained:
+            if not svm.retrained:
+                svm.retrain(trainFeatures, trainLabels, addFeatures)
+            # Validate the model against the test features
+            svm.validate(svm.predict(testFeatures), testLabels)
+        else:
+            print(svm.model_name + ' was not trained, skipping.')
+        # NeuralNetwork
+        nn = NeuralNetwork()
+        if nn.trained:
+            if not nn.retrained:
+                nn.retrain(trainFeatures, trainLabels, addFeatures)
+            # Validate the model against the test features
+            nn.validate(nn.predict(testFeatures), testLabels)
+        else:
+            print(nn.model_name + ' was not trained, skipping.')
+
+
     """imgs = [imread('./test/test1.png', as_gray=True),
             imread('./test/test2.png', as_gray=True),
             imread('./test/test3.png', as_gray=True),
