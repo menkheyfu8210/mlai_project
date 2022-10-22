@@ -19,6 +19,7 @@
 \usepackage[sorting=none, backend=bibtex]{biblatex}
 \nocite{*}
 \addbibresource{references}
+\usepackage{tablefootnote}
 
 \begin{document}
 
@@ -62,11 +63,11 @@ objects.
 In this work the first class of models will be analyzed
 and implemented. Specifically, the Histogram of Oriented
 Gradients (HOG) method will be used to extract features from
-images, because it is known\cite{2} that it is the best performing non-deep learning based feature extractor for human detection. The classification of images will then be implemented
+images, because it is known\cite{2} that it is the best performing non-deep learning based feature extractor for human detection. Feature dimensionality reduction will be achieved with Principal Component Analysis (PCA). The classification of images will then be implemented
 using non-deep learning methods, namely Support Vector
-Machines (SVMs), K-Nearest Neighbors (KNN), Naive Bayes and a shallow neural network.
+Machines (SVMs), K-Nearest Neighbors (KNN), Naive Bayes and a shallow neural network. The best classifier will then be used to implement a full pedestrian detection pipeline.
 
-The full details of the implementation can be found on the project's GitHub page\cite{4}.
+The full details of the implementation can be found on the project's GitHub repository\cite{4}.
 
 The main objectives of this work are described in section
 \ref{sec:obj}. The data set and methodology employed are described in
@@ -308,13 +309,34 @@ K(x,z)=exp\left(-\frac{\norm{x-z}^2}{2\sigma^2}\right)
 
 \subsection{Neural networks}
 
-\subsection{Hard-negative mining}
+Neural networks are collections of interconnected artificial neurons, which are mathematical functions modeled after biological neurons. The artificial neuron accepts one or more inputs, individually weighted, and sums them producing an output which is passed through an activation function which computes the output (or outputs) of the neuron.
 
-Hard-negative mining is a technique used to increase the accuracy of object classifiers, by increasing the number of true negatives and decreasing the number of false positives classified by an already trained classifier.
+\begin{figure}[H]
+\centering
+\includegraphics[keepaspectratio,width=0.6\columnwidth]{6}
+\caption{Artificial neuron}
+\end{figure}
 
-Given an image known not to contain any pedestrians, a Gaussian pyramid is first extracted. That is to say that the image is progressively downsampled, obtaining a set of images at various resolutions. Then a window is slid over each image in the pyramid, and the HOG feature vector is computed. The feature vector is classified by the classifier and, in case the classifier misclassifies the feature vector, the latter is added to the original training set. 
+Among the many possible activation functions, in this work only Rectified Linear Unit (ReLU) will be considered. This choice is motivated by the high computational burden of cross-validating multiple networks to perform hyperparameter tuning, as well as the observation that ReLU is the generally accepted "first choice" in classification problems.
 
-Repeating the process on many additional images will yield a large amount of misclassified feature vectors added to the training set. By retraining the classifier on the expanded training set then its performance should increase.
+Given an input $u$, ReLU is defined as follows:
+\begin{figure}[H]
+\centering
+\includegraphics[keepaspectratio,width=0.6\columnwidth]{7}
+\caption{ReLU}
+\end{figure}
+
+Structurally, shallow neural networks have three layers. The first layer is the input layer, which is made up of a number of neurons equal to the components of the input vector. The third layer is the output layer and its number of neurons depends on the task. For binary classification, the output layer has two neurons. The second layer is called hidden layer, and its number of neurons is highly dependent on factors such as the number of neurons in the input and output layers and the specific task. A simple approach in choosing the number of neurons for the hidden layer is to train multiple networks with different sizes of the hidden layer, and choosing the best one according to some metric, e.g. accuracy.
+
+\begin{figure}[H]
+\centering
+\includegraphics[keepaspectratio,width=0.6\columnwidth]{8}
+\caption{Structure of a shallow neural network}
+\end{figure}
+
+Shallow neural networks are typically fully connected. That is to say each neuron of every layer has inputs coming from each neuron in the previous layer and/or outputs going to each neuron in the following layer.
+
+The fitting of a neural network is done by updating the weight associated to the neuron-neuron connections in a way that minimizes some cost function. This is typically done with backpropagation, which is a widely used algorithm for the training of feed-forward neural networks. It does so by computing the gradient of the cost function for a given state of the network with respect to the current weights. It is called "back-" because the computation of the gradient iteratively happens starting from the last layer, in order to avoid having to compute redundant derivation terms resulting from the chain rule. The weights of the network are then updated by subtracting the corresponding partial derivative of the cost function multiplied by a parameter called learning rate. The learning rate sets the size of the corrective action, and it is an hyperparameter that has to be tuned correctly. An higher learning rate results in a faster training at the price of lower accuracy, while for a lower learning rate it's the opposite.
 
 \subsection{Pedestrian detection}
 
@@ -358,8 +380,18 @@ than some threshold.
 
 The list D then contains only the bounding boxes that have the highest confidence score and that intersect the least with other bounding boxes already in D.
 
+\subsection{Hard-negative mining}
+
+Hard-negative mining is a technique used to increase the accuracy of object detectors, by increasing the number of true negatives and decreasing the number of false positives classified by the classifier used by the detector.
+
+Given an image known not to contain any pedestrians, a Gaussian pyramid is first extracted. That is to say that the image is progressively downsampled, obtaining a set of images at various resolutions. Then a window is slid over each image in the pyramid, and the HOG feature vector is computed. The feature vector is classified by the classifier and, in case the classifier misclassifies the feature vector, the latter is added to the original training set. 
+
+Repeating the process on many additional images will yield a large amount of misclassified feature vectors added to the training set. By retraining the classifier on the expanded training set then its accuracy should increase with respect to the misclassified feature vectors.
+
 \section{Implementation}
 \label{sec:imp}
+
+More in-depth details about the implementation are available on the project's GitHub repository\cite{4}.
 
 \subsection{Feature extraction}
 
@@ -399,7 +431,7 @@ F_1=2\frac{Precision_P\times Recall_P}{Precision_P + Recall_P}
 $F_1$ offers a trade-off between precision and recall. It is a perfectly suited metric for pedestrian detection because the pipeline needs to both maximize the detection rate, but also be sure that the detections actually are pedestrians, or in other words the higher the $F_1$ score, the better. For these reasons only the $F_1$ score related to the pedestrian label is calculated.
 \end{itemize}
 
-Since its purpose is mostly that of showcasing the best performing classifier, the detector will not be subject to any metric evaluation.
+Since its purpose is mostly that of showcasing the best performing classifier, and considering that the used data set does not contain usable data points for the purpose, the detector will not be subject to any metric evaluation.
 
 \subsection{Performed experiments}
 
@@ -407,9 +439,9 @@ Regarding Naive Bayes, 50 models were trained and tested with 50 different value
 
 Regarding KNN, 20 models were trained and tested, with 10 models being trained with Cityblock distance metric and 10 models being trained with Euclidean distance metric. In both cases the 10 models correspond to 10 different K values in the range 1-101, with N number of samples. This was done in order to plot the accuracy-K curve and thus determine what K value results in the best performing model.
 
-Regarding SVM, 28 models were trained and tested, 7 for each kernel type (linear, poly, sigmoid and RBF). The 7 models for each kernel type correspond to 7 different values for the regularization parameter C, in the range 0.001-1000. Once again this was done in order to establish what value for C results in the best performing model.
+Regarding SVM, 28 models were trained and tested, 7 for each kernel type (linear, poly, sigmoid and RBF). The 7 models for each kernel type correspond to 7 different values for the regularization parameter C, in the range 0.001-1. Once again this was done in order to establish what value for C results in the best performing model.
 
-Regarding the neural network, 24 models were trained and tested. 3 models were trained with a single layer, of sizes $(750,)$, $(500,)$ and $(250,)$ respectively, while 3 models were trained with two layers, of sizes $(750,325)$, $(500,250)$ and $(250,125)$ respectively. In both cases all 3 models were trained with 4 different values in the range 0.0001-0.1 for the regularization parameter $\alpha$. Since shallow neural networks are not typically used to classify HOG features, this was done to obtain an indication of the number of hidden layers, the number of neurons in each layer and the value for $\alpha$ that produce the best model.
+Regarding the neural network, 24 models were trained and tested. 3 models were trained with a single layer, of sizes $(750,)$, $(500,)$ and $(250,)$ respectively, while 3 models were trained with two layers, of sizes $(750,325)$, $(500,250)$ and $(250,125)$ respectively. In both cases all 3 models were trained with 4 different values in the range 0.0001-0.1 for the learning rate. Since shallow neural networks are not typically used to classify HOG features, this was done to obtain an indication of the number of hidden layers, the number of neurons in each layer and the value for $\alpha$ that produce the best model.
 
 To further improve performance, the best classifier of each class was then retrained by applying hard-negative mining.
 
@@ -420,5 +452,150 @@ To further improve performance, the best classifier of each class was then retra
 \label{sec:conc}
 
 \printbibliography
+
+\begin{appendices}
+\newpage
+\onecolumn
+
+\section{Hyperparameter tuning results}
+\begin{table}[ht]
+\begin{minipage}[t]{0.3\textwidth}
+\caption{Naive Bayes}
+\centering
+\begin{tabular}{ll}
+\hline\\[-1.5ex]
+Smoothing & Accuracy\tablefootnote{Average over 3-fold cross-validation.\label{footnoteref}}\\ \hline\\[-1.5ex]
+ 1.0      & 0.830 ($\pm$0.134) \\       
+ 0.655    & 0.838 ($\pm$0.127)   \\   
+ 0.429    & 0.842 ($\pm$0.124)     \\  
+ 0.281    & 0.842 ($\pm$0.124)      \\
+ 0.184    & 0.840 ($\pm$0.130)      \\
+ 0.121    & 0.832 ($\pm$0.151)      \\
+ 0.079    & 0.812 ($\pm$0.173)      \\
+ 0.052    & 0.781 ($\pm$0.184)      \\
+ 0.034    & 0.747 ($\pm$0.185)      \\
+ 0.022    & 0.717 ($\pm$0.176)      \\
+ 0.015    & 0.702 ($\pm$0.171)      \\
+ 0.010    & 0.704 ($\pm$0.172)       \\
+ 0.006    & 0.725 ($\pm$0.176)      \\
+ 0.004    & 0.757 ($\pm$0.172)      \\
+ 0.003    & 0.792 ($\pm$0.156)      \\
+ 0.002    & 0.819 ($\pm$0.137)      \\
+ 0.001    & 0.835 ($\pm$0.125)      \\
+ 7.54e-03 & 0.841 ($\pm$0.115)\\
+ 4.94e-03 & 0.843 ($\pm$0.111)\\
+ 3.23e-03 & 0.844 ($\pm$0.111)\\
+ 2.12e-03 & 0.843 ($\pm$0.108)\\
+ 1.38e-03 & 0.842 ($\pm$0.110)\\
+ 9.10e-05 & 0.842 ($\pm$0.112)\\
+ 5.96e-05 & 0.841 ($\pm$0.111)\\
+ 3.90e-05 & 0.840 ($\pm$0.112)\\
+ 2.55e-05 & 0.840 ($\pm$0.113)\\
+ 1.67e-05 & 0.839 ($\pm$0.113)\\
+ 1.09e-05 & 0.839 ($\pm$0.113)\\
+ 7.19e-06 & 0.839 ($\pm$0.114)\\
+ 4.71e-06 & 0.839 ($\pm$0.114)\\
+ 3.08e-06 & 0.840 ($\pm$0.114)\\
+ 2.02e-06 & 0.840 ($\pm$0.114)\\
+ 1.32e-06 & 0.840 ($\pm$0.113)\\
+ 8.68e-07 & 0.840 ($\pm$0.113)\\
+ 5.68e-07 & 0.840 ($\pm$0.113)\\
+ 3.72e-07 & 0.840 ($\pm$0.113)\\
+ 2.44e-07 & 0.840 ($\pm$0.113)\\
+ 1.59e-07 & 0.840 ($\pm$0.113)\\
+ 1.04e-07 & 0.840 ($\pm$0.113)\\
+ 6.86e-08 & 0.840 ($\pm$0.113)\\
+ 4.49e-08 & 0.840 ($\pm$0.113)\\
+ 2.94e-08 & 0.840 ($\pm$0.113)\\
+ 1.93e-08 & 0.840 ($\pm$0.113)\\
+ 1.26e-08 & 0.840 ($\pm$0.113)\\
+ 8.28e-09 & 0.840 ($\pm$0.113)\\
+ 5.42e-09 & 0.840 ($\pm$0.113)\\
+ 3.55e-09 & 0.840 ($\pm$0.113)\\
+ 2.32e-09 & 0.840 ($\pm$0.113)\\
+ 1.52e-09 & 0.840 ($\pm$0.113)\\
+ 1e-09    & 0.840 ($\pm$0.113) \\\hline\\[-1.5ex]
+\end{tabular}
+\end{minipage}
+\begin{minipage}[t]{0.3\textwidth}
+\caption{K-Nearest Neighbors}
+\centering
+\begin{tabular}{lll}
+\hline\\[-1.5ex]
+Metric & K & Accuracy\textsuperscript{\getrefnumber{footnoteref}}  \\ \hline\\[-1.5ex]
+cityblock & 1 & 0.590 ($\pm$0.088)\\
+cityblock & 3 & 0.574 ($\pm$0.089)\\
+cityblock & 5 & 0.568 ($\pm$0.087)\\
+cityblock & 7 & 0.563 ($\pm$0.082)\\
+cityblock & 9 & 0.559 ($\pm$0.074)\\
+cityblock & 11 & 0.558 ($\pm$0.074) \\
+cityblock & 25 & 0.552 ($\pm$0.057) \\
+cityblock & 51 & 0.551 ($\pm$0.045) \\
+cityblock & 75 & 0.554 ($\pm$0.044) \\
+cityblock & 101 & 0.556 ($\pm$0.042) \\\hline\\[-1.5ex]
+euclidean & 1 & 0.838 ($\pm$0.053) \\
+euclidean & 3 & 0.846 ($\pm$0.054) \\
+euclidean & 5 & 0.850 ($\pm$0.058) \\
+euclidean & 7 & 0.850 ($\pm$0.060) \\
+euclidean & 9 & 0.849 ($\pm$0.062) \\
+euclidean & 11 & 0.849 ($\pm$0.065) \\
+euclidean & 25 & 0.848 ($\pm$0.070) \\
+euclidean & 51 & 0.844 ($\pm$0.077) \\
+euclidean & 75 & 0.841 ($\pm$0.077)\\
+euclidean & 101 & 0.840 ($\pm$0.079) \\\hline\\[-1.5ex]
+\end{tabular}
+\bigskip
+\caption{Support Vector Machine}
+\centering
+\begin{tabular}{lll}
+\hline\\[-1.5ex]
+Kernel & C & Accuracy\textsuperscript{\getrefnumber{footnoteref}}  \\ \hline\\[-1.5ex]
+linear & 0.001 & 0.896 ($\pm$0.066)\\
+linear & 0.01 & 0.893 ($\pm$0.071)\\
+linear & 0.1 & 0.892 ($\pm$0.071)\\
+linear & 1 & 0.892 ($\pm$0.071)\\\hline\\[-1.5ex]
+poly & 0.001 & 0.510 ($\pm$0.000)\\
+poly & 0.01 & 0.510 ($\pm$0.000)\\
+poly & 0.1 & 0.852 ($\pm$0.127)\\
+poly & 1 & 0.885 ($\pm$0.055)\\\hline\\[-1.5ex]
+sigmoid & 0.001 & 0.510 ($\pm$0.001)\\
+sigmoid & 0.01 & 0.861 ($\pm$0.076)\\
+sigmoid & 0.1 & 0.888 ($\pm$0.067)\\
+sigmoid & 1 & 0.889 ($\pm$0.071)\\\hline\\[-1.5ex]
+rbf & 0.001 & 0.510 ($\pm$0.000)\\
+rbf& 0.01 & 0.844 ($\pm$0.090)\\
+rbf & 0.1 & 0.897 ($\pm$0.073)\\
+rbf & 1 & 0.918 ($\pm$0.068)\\\hline\\[-1.5ex]
+\end{tabular}
+\end{minipage}
+\begin{minipage}[t]{0.3\textwidth}
+\caption{Neural network}
+\centering
+\begin{tabular}{lll}
+\hline\\[-1.5ex]
+Kernel & C & Accuracy \textsuperscript{\getrefnumber{footnoteref}} \\ \hline\\[-1.5ex]
+linear & 0.001 & 0.896 ($\pm$0.066)\\
+linear & 0.01 & 0.893 ($\pm$0.071)\\
+linear & 0.1 & 0.892 ($\pm$0.071)\\
+linear & 1 & 0.892 ($\pm$0.071)\\
+poly & 0.001 & 0.510 ($\pm$0.000)\\
+poly & 0.01 & 0.510 ($\pm$0.000)\\
+poly & 0.1 & 0.852 ($\pm$0.127)\\
+poly & 1 & 0.885 ($\pm$0.055)\\
+sigmoid & 0.001 & 0.510 ($\pm$0.001)\\
+sigmoid & 0.01 & 0.861 ($\pm$0.076)\\
+sigmoid & 0.1 & 0.888 ($\pm$0.067)\\
+sigmoid & 1 & 0.889 ($\pm$0.071)\\
+rbf & 0.001 & 0.510 ($\pm$0.000)\\
+rbf& 0.01 & 0.844 ($\pm$0.090)\\
+rbf & 0.1 & 0.897 ($\pm$0.073)\\
+rbf & 1 & 0.918 ($\pm$0.068)\\\hline\\[-1.5ex]
+\end{tabular} 
+\end{minipage}
+\end{table}
+
+
+
+\end{appendices}
 
 \end{document}

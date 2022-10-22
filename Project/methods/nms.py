@@ -77,17 +77,18 @@ def nms(B, threshold=.5):
         return []
     # Sort the proposals based on confidence score
     B = sorted(B, key=lambda B: B[2], reverse=True)
-    D=[]
+    D = []
     D.append(B[0])
-    del B[0]
+    B[0] = None
     # Keep only the proposals whose overlapping area with other proposals is 
     # lower than the threshold
     for i, b in enumerate(B):
-        for d in D:
-            if IOU(b, d) > threshold:
-                del B[i]
-                break
-            else:
-                D.append(b)
-                del B[i]
+        if b is not None:
+            for d in D:
+                if IOU(b, d) > threshold:
+                    B[i] = None
+                    break
+                else:
+                    D.append(b)
+                    B[i] = None
     return D
